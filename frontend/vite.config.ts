@@ -23,4 +23,10 @@ export default defineConfig({
       "/api": { target: api, changeOrigin: true, ws: true },
     },
   },
+  preview: {
+    port: 5173,
+    proxy: {
+      "/api": { target: api, changeOrigin: true, ws: true },
+    },
+  },
 });

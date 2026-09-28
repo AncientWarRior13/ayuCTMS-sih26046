@@ -86,7 +86,9 @@ export async function download(path: string, fallbackName: string): Promise<void
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  // Revoking immediately can race the browser's read of the blob (especially once triggered
+  // programmatically), silently dropping the download. Give it a moment first.
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
 export async function login(email: string, password: string, totp?: string) {

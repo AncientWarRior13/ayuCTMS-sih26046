@@ -13,10 +13,18 @@ type Tab = "overview" | "participants" | "deviations" | "queries" | "safety" | "
 
 function useInvalidate(id: string) {
   const qc = useQueryClient();
+  // Cancel any in-flight fetch for these keys before invalidating. Without this, an older
+  // request - e.g. from a previous mutation on this same page - can resolve after a newer one
+  // and clobber it with stale data, since a plain invalidate doesn't cancel requests already
+  // in flight. Cancelling first guarantees only the latest fetch for each key ever commits.
+  const bump = (key: unknown[]) => {
+    qc.cancelQueries({ queryKey: key });
+    qc.invalidateQueries({ queryKey: key });
+  };
   return () => {
-    qc.invalidateQueries({ queryKey: ["study", id] });
-    qc.invalidateQueries({ queryKey: ["studies"] });
-    qc.invalidateQueries({ queryKey: ["study-dash", id] });
+    bump(["study", id]);
+    bump(["studies"]);
+    bump(["study-dash", id]);
   };
 }
 
@@ -26,9 +34,23 @@ function Overview({ s }: { s: any }) {
   const refresh = useInvalidate(String(s.id));
   const { data: dash } = useQuery<any>({ queryKey: ["study-dash", String(s.id)], queryFn: () => get(`/dashboard/study/${s.id}`) });
   const [reason, setReason] = useState("");
+  const qc = useQueryClient();
   const tr = useMutation({
     mutationFn: () => post(`/studies/${s.id}/transition`, { target_state: s.next_state, reason: reason || undefined }),
-    onSuccess: () => { toast(`Study moved to ${human(s.next_state)}`); setReason(""); refresh(); },
+    onSuccess: (data: { state: string }) => {
+      // Cancel any fetch already in flight for this key before patching, so a stale response
+      // from an earlier action on this page can't land afterward and overwrite this update.
+      qc.cancelQueries({ queryKey: ["study", String(s.id)] });
+      const idx = STATES.indexOf(data.state);
+      qc.setQueryData(["study", String(s.id)], (prev: any) => prev && {
+        ...prev, state: data.state,
+        next_state: idx >= 0 && idx + 1 < STATES.length ? STATES[idx + 1] : null,
+        next_state_blockers: [],
+      });
+      toast(`Study moved to ${human(data.state)}`);
+      setReason("");
+      refresh();
+    },
   });
   const canTransition =
     s.next_state && can("study.transition") &&

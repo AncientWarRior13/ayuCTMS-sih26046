@@ -50,6 +50,36 @@ def _flat_routes():
             yield getattr(route, "path", ""), route
 
 
+def test_totp_setup_confirm_login_and_disable(client, api):
+    import pyotp
+
+    r = api.post("MONITOR", "/auth/totp/setup")
+    assert r.status_code == 200
+    secret = r.json()["secret"]
+    assert "otpauth://totp/" in r.json()["otpauth_uri"]
+
+    bad = api.post("MONITOR", "/auth/totp/confirm", json={"code": "000000"})
+    assert bad.status_code == 401
+
+    code = pyotp.TOTP(secret).now()
+    ok = api.post("MONITOR", "/auth/totp/confirm", json={"code": code})
+    assert ok.status_code == 200 and ok.json()["totp_enabled"] is True
+    assert api.get("MONITOR", "/auth/me").json()["totp_enabled"] is True
+
+    r = client.post("/api/v1/auth/login", json={"email": "monitor@demo.test", "password": PASSWORD})
+    assert r.status_code == 401 and "TOTP" in r.json()["detail"]
+    r = client.post("/api/v1/auth/login", json={"email": "monitor@demo.test", "password": PASSWORD,
+                                                "totp": pyotp.TOTP(secret).now()})
+    assert r.status_code == 200
+
+    bad_disable = api.post("MONITOR", "/auth/totp/disable", json={"password": "wrong"})
+    assert bad_disable.status_code == 401
+    r = api.post("MONITOR", "/auth/totp/disable", json={"password": PASSWORD})
+    assert r.status_code == 200 and r.json()["totp_enabled"] is False
+    r = client.post("/api/v1/auth/login", json={"email": "monitor@demo.test", "password": PASSWORD})
+    assert r.status_code == 200  # no longer requires a code
+
+
 def _routes():
     for full_path, route in _flat_routes():
         methods = getattr(route, "methods", None)

@@ -9,6 +9,7 @@ export interface Me {
   email: string;
   full_name: string;
   role: Role;
+  totp_enabled: boolean;
   sites: { id: number; code: string; name: string }[];
   permissions: string[];
 }

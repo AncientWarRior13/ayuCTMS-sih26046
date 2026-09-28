@@ -178,10 +178,10 @@ export default function Layout() {
           </button>
           <div className="flex-1" />
           <AlertBell />
-          <div className="hidden text-right sm:block">
+          <Link to="/account" className="hidden text-right hover:opacity-80 sm:block">
             <div className="text-sm font-medium">{me.full_name}</div>
             <div className="text-xs text-slate-500">{ROLE_LABEL[me.role]}{me.sites.length ? ` - ${me.sites.map((s) => s.code).join(", ")}` : ""}</div>
-          </div>
+          </Link>
           <button
             aria-label="Sign out"
             title="Sign out"

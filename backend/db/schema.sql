@@ -32,6 +32,7 @@ CREATE TABLE users (
   role          user_role NOT NULL,
   password_hash TEXT NOT NULL,
   totp_secret   TEXT,
+  totp_pending_secret TEXT,
   is_active     BOOLEAN NOT NULL DEFAULT TRUE,
   failed_logins INT NOT NULL DEFAULT 0,
   locked_until  TIMESTAMPTZ,

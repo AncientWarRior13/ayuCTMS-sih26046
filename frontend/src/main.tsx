@@ -8,6 +8,7 @@ import { RequireAuth, RoleGuard } from "./auth/RoleGuard";
 import Layout from "./components/Layout";
 import { ToastProvider } from "./components/ui";
 import "./index.css";
+import AccountPage from "./routes/Account";
 import AdminPage from "./routes/Admin";
 import AlertsPage from "./routes/Alerts";
 import AuditPage from "./routes/Audit";
@@ -64,6 +65,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/risk" element={<RiskPage />} />
                 <Route path="/audit" element={<RoleGuard perm="audit.read"><AuditPage /></RoleGuard>} />
                 <Route path="/alerts" element={<AlertsPage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route path="/compliance" element={<CompliancePage />} />
                 <Route path="/settings" element={<RoleGuard perm="rules.read"><AdminPage /></RoleGuard>} />
                 <Route path="*" element={<RootRedirect />} />

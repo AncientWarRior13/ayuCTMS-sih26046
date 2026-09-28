@@ -28,6 +28,14 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class TotpConfirm(BaseModel):
+    code: str
+
+
+class TotpDisable(BaseModel):
+    password: str
+
+
 def _site_ids(conn, uid: int) -> list[int]:
     return [r["site_id"] for r in rows(conn, "SELECT site_id FROM user_sites WHERE user_id = :u ORDER BY site_id", {"u": uid})]
 
@@ -103,3 +111,45 @@ def me(user: User = Depends(current_user)):
     if not u:
         raise HTTPException(401, "User not found")
     return {**u, "sites": sites, "permissions": permissions_for(user.role)}
+
+
+@router.post("/totp/setup")
+def totp_setup(user: User = Depends(current_user)):
+    """Generates a pending TOTP secret. It only takes effect on /auth/totp/confirm, so a user
+    cannot lock themselves out by misconfiguring their authenticator app."""
+    secret = pyotp.random_base32()
+    with engine().begin() as conn:
+        set_context(conn, user.role, user.site_ids, user.id)
+        u = one(conn, "SELECT email FROM users WHERE id = :id", {"id": user.id})
+        conn.execute(text("UPDATE users SET totp_pending_secret = :s WHERE id = :id"), {"s": secret, "id": user.id})
+        audit.write(conn, user, "TOTP_SETUP_STARTED", "user", user.id)
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=u["email"], issuer_name="AyuCTMS")
+    return {"secret": secret, "otpauth_uri": uri}
+
+
+@router.post("/totp/confirm")
+def totp_confirm(body: TotpConfirm, user: User = Depends(current_user)):
+    with engine().begin() as conn:
+        set_context(conn, user.role, user.site_ids, user.id)
+        u = one(conn, "SELECT totp_pending_secret FROM users WHERE id = :id", {"id": user.id})
+        if not u or not u["totp_pending_secret"]:
+            raise HTTPException(409, "No pending TOTP setup; call /auth/totp/setup first")
+        if not pyotp.TOTP(u["totp_pending_secret"]).verify(body.code, valid_window=1):
+            raise HTTPException(401, "Incorrect code")
+        conn.execute(text("UPDATE users SET totp_secret = totp_pending_secret, totp_pending_secret = NULL"
+                          " WHERE id = :id"), {"id": user.id})
+        audit.write(conn, user, "TOTP_ENABLED", "user", user.id)
+    return {"totp_enabled": True}
+
+
+@router.post("/totp/disable")
+def totp_disable(body: TotpDisable, user: User = Depends(current_user)):
+    with engine().begin() as conn:
+        set_context(conn, user.role, user.site_ids, user.id)
+        u = one(conn, "SELECT password_hash FROM users WHERE id = :id", {"id": user.id})
+        if not u or not verify_password(body.password, u["password_hash"]):
+            raise HTTPException(401, "Incorrect password")
+        conn.execute(text("UPDATE users SET totp_secret = NULL, totp_pending_secret = NULL WHERE id = :id"),
+                     {"id": user.id})
+        audit.write(conn, user, "TOTP_DISABLED", "user", user.id)
+    return {"totp_enabled": False}
