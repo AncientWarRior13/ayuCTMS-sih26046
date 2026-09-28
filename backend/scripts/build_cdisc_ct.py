@@ -30,6 +30,18 @@ def run(conn) -> None:
                "Terms only; codes are not official")
     seed_audit(conn, "lookup_ayush_morbidity", len(ayush), "stub")
 
+    interactions = read_csv("herb_drug_interactions.csv")
+    for r in interactions:
+        conn.execute(text("""INSERT INTO lookup_herb_drug_interaction
+                     (herb, drug_class, drug_synonyms, severity, mechanism, recommendation, source_note)
+                     VALUES (:herb, :drug_class, :synonyms, :severity, :mechanism, :recommendation, :source_note)"""),
+                     {**r, "synonyms": r["drug_synonyms"].split("|")})
+    provenance(conn, "lookup_herb_drug_interaction", "Curated herb-drug interaction reference (project addition)",
+               None, "Not a licensed drug-interaction database; each row is marked [Verify] and must be"
+                     " confirmed against current product literature before clinical use",
+               "Curated for the herbs used in the seeded studies; decision-support aid, not a medical device")
+    seed_audit(conn, "lookup_herb_drug_interaction", len(interactions), "curated, unverified [Verify]")
+
 
 if __name__ == "__main__":
     with owner_engine().begin() as c:

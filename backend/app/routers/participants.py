@@ -27,12 +27,15 @@ class ParticipantCreate(BaseModel):
     consent_document_id: int | None = None
     witness_name: str | None = None
     guardian_consent: bool = False
+    comprehension_answers: list[int] | None = Field(
+        default=None, description="Selected option index per comprehension question, in order")
 
 
 class ConsentIn(BaseModel):
     consent_document_id: int
     witness_name: str | None = None
     guardian_consent: bool = False
+    comprehension_answers: list[int] | None = None
 
 
 class WithdrawIn(BaseModel):
@@ -72,6 +75,20 @@ def _check_consent_doc(conn: Connection, study_id: int, doc_id: int) -> None:
         raise HTTPException(422, "Consent document is not valid for this study")
 
 
+def _score_comprehension(conn: Connection, doc_id: int, answers: list[int] | None) -> float | None:
+    """Scores against the correct_index stored in the database - never against anything the
+    client sent - so the score can't be gamed by echoing back a client-supplied answer key."""
+    doc = get_or_404(conn, "SELECT comprehension_questions FROM consent_documents WHERE id = :d", {"d": doc_id},
+                     "Consent document")
+    questions = doc["comprehension_questions"]
+    if not questions:
+        return None
+    if not answers or len(answers) != len(questions):
+        raise HTTPException(422, f"This consent document requires {len(questions)} comprehension answer(s)")
+    correct = sum(1 for q, a in zip(questions, answers) if a == q["correct_index"])
+    return round(correct / len(questions), 2)
+
+
 @router.get("/studies/{sid}/participants")
 def list_participants(sid: int, status: str | None = None, site_id: int | None = None,
                       user: User = Depends(require("participant.read")), conn=Depends(db)):
@@ -106,6 +123,7 @@ def enrol(sid: int, body: ParticipantCreate, user: User = Depends(require("parti
         raise HTTPException(422, "Site is not active for this study")
     if body.site_id not in user.site_ids:
         raise HTTPException(403, "You are not assigned to this site")
+    comprehension_score = _score_comprehension(conn, body.consent_document_id, body.comprehension_answers)
 
     n = conn.execute(text("SELECT next_subject_seq(:s)"), {"s": sid}).scalar()
     code = f"AIIA-{sid:03d}-{n:04d}"
@@ -117,9 +135,11 @@ def enrol(sid: int, body: ParticipantCreate, user: User = Depends(require("parti
              "d": today, "sex": body.sex, "age": body.age_years})
     conn.execute(text("INSERT INTO participant_pii (participant_id, name_enc, contact_enc) VALUES (:p, :n, :c)"),
                  {"p": p["id"], "n": encrypt_pii(body.name), "c": encrypt_pii(body.contact)})
-    conn.execute(text("INSERT INTO consents (participant_id, consent_document_id, consented_at, witness_name,"
-                      " guardian_consent) VALUES (:p, :d, now(), :w, :g)"),
-                 {"p": p["id"], "d": body.consent_document_id, "w": body.witness_name, "g": body.guardian_consent})
+    conn.execute(text("""INSERT INTO consents (participant_id, consent_document_id, consented_at, witness_name,
+                      guardian_consent, comprehension_answers, comprehension_score)
+                      VALUES (:p, :d, now(), :w, :g, CAST(:a AS jsonb), :sc)"""),
+                 {"p": p["id"], "d": body.consent_document_id, "w": body.witness_name, "g": body.guardian_consent,
+                  "a": json.dumps(body.comprehension_answers), "sc": comprehension_score})
     for name, offset in DEFAULT_SCHEDULE:
         conn.execute(text("INSERT INTO visits (participant_id, visit_name, planned_date) VALUES (:p, :n, :d)"),
                      {"p": p["id"], "n": name, "d": today + timedelta(days=offset)})
@@ -158,9 +178,12 @@ def consent(pid: int, body: ConsentIn, user: User = Depends(require("consent.wri
     _check_consent_doc(conn, p["study_id"], body.consent_document_id)
     if (p["age_years"] or 0) < 18 and not body.guardian_consent:
         raise HTTPException(409, "Participant is a minor: verifiable guardian consent is required")
-    r = one(conn, "INSERT INTO consents (participant_id, consent_document_id, consented_at, witness_name, guardian_consent)"
-                  " VALUES (:p, :d, now(), :w, :g) RETURNING *",
-            {"p": pid, "d": body.consent_document_id, "w": body.witness_name, "g": body.guardian_consent})
+    comprehension_score = _score_comprehension(conn, body.consent_document_id, body.comprehension_answers)
+    r = one(conn, """INSERT INTO consents (participant_id, consent_document_id, consented_at, witness_name,
+                     guardian_consent, comprehension_answers, comprehension_score)
+                     VALUES (:p, :d, now(), :w, :g, CAST(:a AS jsonb), :sc) RETURNING *""",
+            {"p": pid, "d": body.consent_document_id, "w": body.witness_name, "g": body.guardian_consent,
+             "a": json.dumps(body.comprehension_answers), "sc": comprehension_score})
     audit.write(conn, user, "CREATE", "consent", r["id"], after=r)
     return r
 

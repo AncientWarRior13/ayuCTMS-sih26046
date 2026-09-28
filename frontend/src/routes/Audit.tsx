@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle2, Link2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Anchor, CheckCircle2, Link2, ShieldCheck } from "lucide-react";
 import { Fragment, useState } from "react";
 import { get, post } from "../api/client";
 import { Can } from "../auth/RoleGuard";
-import { Badge, Button, Card, ErrorBox, fmtDateTime, Loading, Table, useToast } from "../components/ui";
+import { Badge, Button, Card, ErrorBox, Field, fmtDateTime, Loading, Modal, Table, useToast } from "../components/ui";
 
 function Json({ v }: { v: unknown }) {
   if (v == null) return <span className="text-slate-400">-</span>;
@@ -22,6 +22,17 @@ export default function AuditPage() {
   const { data: cps = [] } = useQuery<any[]>({ queryKey: ["checkpoints"], queryFn: () => get("/audit/checkpoints") });
   const cp = useMutation({ mutationFn: () => post("/audit/checkpoints"), onSuccess: () => { toast("Checkpoint created"); qc.invalidateQueries({ queryKey: ["checkpoints"] }); } });
   const [cpCheck, setCpCheck] = useState<Record<number, any>>({});
+  const [anchorFor, setAnchorFor] = useState<any>(null);
+  const [anchorText, setAnchorText] = useState("");
+  const [anchorUrl, setAnchorUrl] = useState("");
+  const anchorM = useMutation({
+    mutationFn: () => post(`/audit/checkpoints/${anchorFor.id}/anchor`, { anchor_url: anchorUrl }),
+    onSuccess: () => { toast("Checkpoint anchored"); setAnchorFor(null); setAnchorUrl(""); qc.invalidateQueries({ queryKey: ["checkpoints"] }); },
+  });
+  const openAnchor = async (c: any) => {
+    setAnchorFor(c);
+    setAnchorText((await get<{ text: string }>(`/audit/checkpoints/${c.id}/anchor-text`)).text);
+  };
   const v = verify.data;
 
   return (
@@ -41,8 +52,8 @@ export default function AuditPage() {
           <ErrorBox error={verify.error} />
         </Card>
         <Card title="Merkle checkpoints" actions={<Can perm="audit.checkpoint"><Button size="sm" onClick={() => cp.mutate()} disabled={cp.isPending}>Create checkpoint</Button></Can>}>
-          <p className="mb-3 text-sm text-slate-600">A checkpoint publishes a Merkle root over the chain. Sharing the root outside the system (email to the IEC, public timestamp) protects history even against a database administrator.</p>
-          <Table head={["#", "Created", "Records", "Merkle root", ""]} empty={!cps.length}>
+          <p className="mb-3 text-sm text-slate-600">A checkpoint publishes a Merkle root over the chain. Anchoring it somewhere outside this system (a public gist, a timestamping service, an email to the IEC) makes a later rewrite of history detectable even by a database administrator - until anchored, a checkpoint only proves integrity to someone who trusts this database's own record of it.</p>
+          <Table head={["#", "Created", "Records", "Merkle root", "Verify", "Anchor"]} empty={!cps.length}>
             {cps.slice(0, 5).map((c) => (
               <tr key={c.id}>
                 <td className="td">{c.id}</td><td className="td">{fmtDateTime(c.created_at)}</td><td className="td">{c.row_count}</td>
@@ -52,11 +63,33 @@ export default function AuditPage() {
                     <Button size="sm" variant="secondary" onClick={async () => setCpCheck({ ...cpCheck, [c.id]: await get(`/audit/checkpoints/${c.id}/verify`) })}>Check</Button>
                   )}
                 </td>
+                <td className="td">
+                  {c.anchored_at ? (
+                    <a href={c.anchor_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-brand-700 hover:underline">
+                      <Anchor size={12} /> {fmtDateTime(c.anchored_at)}
+                    </a>
+                  ) : (
+                    <Can perm="audit.checkpoint"><Button size="sm" variant="secondary" onClick={() => openAnchor(c)}><Anchor size={12} /> Anchor</Button></Can>
+                  )}
+                </td>
               </tr>
             ))}
           </Table>
         </Card>
       </div>
+      <Modal open={!!anchorFor} onClose={() => setAnchorFor(null)} title={`Anchor checkpoint #${anchorFor?.id ?? ""} externally`} wide>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">Publish the text below somewhere outside this system - a public GitHub gist, an OpenTimestamps-style proof, an email to the Ethics Committee - then paste the link back here. Anyone who kept a copy of that publication can independently detect if this database's history is later altered, even by an administrator.</p>
+          <div className="rounded-md bg-slate-50 p-3">
+            <pre className="whitespace-pre-wrap text-xs">{anchorText}</pre>
+          </div>
+          <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); anchorM.mutate(); }}>
+            <div className="flex-1"><Field label="Published at (URL)"><input className="input" type="url" required value={anchorUrl} onChange={(e) => setAnchorUrl(e.target.value)} placeholder="https://gist.github.com/..." /></Field></div>
+            <Button disabled={anchorM.isPending}>Record anchor</Button>
+          </form>
+          <ErrorBox error={anchorM.error} />
+        </div>
+      </Modal>
       <Card
         title={`Records${data ? ` (${data.total})` : ""}`}
         actions={
@@ -81,7 +114,7 @@ export default function AuditPage() {
                     <td className="td"><Badge tone={r.action.includes("FAIL") ? "red" : r.action === "EXPORT" || r.action === "READ_PII" ? "purple" : "teal"}>{r.action}</Badge></td>
                     <td className="td text-xs">{r.entity_type}{r.entity_id && ` #${r.entity_id}`}</td>
                     <td className="td max-w-xs truncate text-xs">{r.reason ?? "-"}</td>
-                    <td className="td mono text-[10px] text-slate-500"><Link2 size={10} className="mr-1 inline" />{r.prev_hash.slice(0, 8)} &rarr; {r.row_hash.slice(0, 8)}</td>
+                    <td className="td mono text-[10px] text-slate-500"><Link2 size={10} className="mr-1 inline" />{r.prev_hash.slice(0, 8)} {"→"} {r.row_hash.slice(0, 8)}</td>
                   </tr>
                   {open === r.id && (
                     <tr><td colSpan={7} className="bg-slate-50/60 px-3 py-3">

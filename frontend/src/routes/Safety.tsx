@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, Plus } from "lucide-react";
+import { AlertTriangle, FileText, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { download, get, post } from "../api/client";
@@ -53,10 +53,42 @@ function NaranjoHelper({ onScore }: { onScore: (n: number) => void }) {
   );
 }
 
+function InteractionWarning({ interactions }: { interactions: any[] }) {
+  if (!interactions?.length) return null;
+  const tone = (sev: string): "red" | "amber" | "gray" => (sev === "MAJOR" ? "red" : sev === "MODERATE" ? "amber" : "gray");
+  return (
+    <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-900">
+        <AlertTriangle size={16} /> Herb-drug interaction reference match
+      </div>
+      <ul className="space-y-2">
+        {interactions.map((i, idx) => (
+          <li key={idx} className="text-sm">
+            <div className="flex items-center gap-2">
+              <Badge tone={tone(i.severity)}>{human(i.severity)}</Badge>
+              <span className="font-medium">{i.herb} {"×"} {i.drug_class}</span>
+              <span className="text-xs text-slate-500">(matched "{i.matched_term}")</span>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-700">{i.mechanism}</p>
+            <p className="text-xs text-slate-700"><b>Recommendation:</b> {i.recommendation}</p>
+            <p className="text-[11px] text-slate-500">{i.source_note}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[11px] text-amber-800">Decision-support reference only, not a medical device - verify against current product literature.</p>
+    </div>
+  );
+}
+
 function AeDetail({ id }: { id: number }) {
   const qc = useQueryClient();
   const toast = useToast();
   const { data: a, isLoading } = useQuery<any>({ queryKey: ["ae", id], queryFn: () => get(`/ae/${id}`) });
+  const { data: interactions = [] } = useQuery<any[]>({
+    queryKey: ["interactions", a?.suspect_intervention, a?.concomitant_meds],
+    queryFn: () => get(`/interactions/check?intervention=${encodeURIComponent(a.suspect_intervention)}&concomitant_meds=${encodeURIComponent(a.concomitant_meds)}`),
+    enabled: !!(a?.suspect_intervention && a?.concomitant_meds),
+  });
   const [f, setF] = useState({ causality: "", naranjo_score: "" as number | "", outcome: "", reason: "" });
   const [helper, setHelper] = useState(false);
   const inv = () => qc.invalidateQueries({ queryKey: ["ae"] });
@@ -99,6 +131,7 @@ function AeDetail({ id }: { id: number }) {
           <ErrorBox error={sM.error} />
         </Card>
       )}
+      <InteractionWarning interactions={interactions} />
       <Card title="Event details">
         <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
           {[["Onset", fmtDate(a.onset_date)], ["Awareness", fmtDateTime(a.awareness_at)], ["Severity", human(a.severity)],
@@ -142,6 +175,12 @@ function ReportAe({ open, onClose }: { open: boolean; onClose: (id?: number) => 
   const { data: ayush = [] } = useQuery<any[]>({ queryKey: ["lookup", "ayush-morbidity"], queryFn: () => get("/lookups/ayush-morbidity"), enabled: open });
   const nowLocal = useMemo(() => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16), [open]);
   const [f, setF] = useState<any>({ participant_id: 0, onset_date: nowLocal.slice(0, 10), awareness_at: nowLocal, description: "", severity: "MILD", is_serious: false, seriousness_criteria: [], meddra_pt: "", ayush_morbidity_code: "", icd11_code: "", concomitant_meds: "", action_taken: "" });
+  const intervention = eligible.find((s) => s.id === study)?.intervention ?? "";
+  const { data: interactions = [] } = useQuery<any[]>({
+    queryKey: ["interactions", intervention, f.concomitant_meds],
+    queryFn: () => get(`/interactions/check?intervention=${encodeURIComponent(intervention)}&concomitant_meds=${encodeURIComponent(f.concomitant_meds)}`),
+    enabled: open && !!intervention && f.concomitant_meds.trim().length > 2,
+  });
   const m = useMutation({
     mutationFn: () => post("/ae", {
       ...f, participant_id: +f.participant_id || parts.find((p) => p.status !== "WITHDRAWN")?.id,
@@ -165,6 +204,7 @@ function ReportAe({ open, onClose }: { open: boolean; onClose: (id?: number) => 
         <Field label="ICD-11 code"><input className="input" value={f.icd11_code} onChange={set("icd11_code")} /></Field>
         <Field label="Concomitant medicines"><input className="input" value={f.concomitant_meds} onChange={set("concomitant_meds")} /></Field>
         <Field label="Action taken"><select className="input" value={f.action_taken} onChange={set("action_taken")}><option value="">-</option>{["DOSE NOT CHANGED", "DOSE REDUCED", "DRUG INTERRUPTED", "DRUG WITHDRAWN", "NOT APPLICABLE"].map((x) => <option key={x}>{x}</option>)}</select></Field>
+        {interactions.length > 0 && <div className="sm:col-span-3"><InteractionWarning interactions={interactions} /></div>}
         <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-red-700"><input type="checkbox" checked={f.is_serious} onChange={(e) => setF({ ...f, is_serious: e.target.checked })} /> Serious adverse event</label>
         {f.is_serious && (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 sm:col-span-3">

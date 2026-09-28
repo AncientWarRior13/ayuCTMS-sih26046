@@ -120,15 +120,19 @@ export default function ParticipantDrawer({ pid, study, onClose }: { pid: number
   const [askPii, setAskPii] = useState(false);
   const [withdraw, setWithdraw] = useState(false);
   const [reason, setReason] = useState("");
+  const [reAnswers, setReAnswers] = useState<number[]>([]);
   const inv = () => { qc.invalidateQueries({ queryKey: ["participant", pid] }); qc.invalidateQueries({ queryKey: ["participants", study.id] }); qc.invalidateQueries({ queryKey: ["reconsent", study.id] }); };
   const piiM = useMutation({ mutationFn: () => get(`/participants/${pid}/pii?purpose=${encodeURIComponent(purpose)}`), onSuccess: (d) => { setPii(d); setAskPii(false); } });
   const wM = useMutation({ mutationFn: () => post(`/participants/${pid}/withdraw`, { reason }), onSuccess: () => { toast("Withdrawal recorded"); setWithdraw(false); inv(); } });
+  const reconsentDocId = p ? study.amendments.find((a: any) => p.pending_reconsent.includes(a.version))?.consent_document_id : null;
+  const reconsentDoc = study.consent_documents.find((d: any) => d.id === reconsentDocId);
+  const reQuestions: { question: string; options: string[] }[] = reconsentDoc?.comprehension_questions ?? [];
   const reM = useMutation({
-    mutationFn: () => {
-      const doc = study.amendments.find((a: any) => p.pending_reconsent.includes(a.version))?.consent_document_id;
-      return post(`/participants/${pid}/consent`, { consent_document_id: doc, witness_name: "Site nurse" });
-    },
-    onSuccess: () => { toast("Re-consent recorded"); inv(); },
+    mutationFn: () => post(`/participants/${pid}/consent`, {
+      consent_document_id: reconsentDocId, witness_name: "Site nurse",
+      comprehension_answers: reQuestions.length ? reAnswers : undefined,
+    }),
+    onSuccess: () => { toast("Re-consent recorded"); setReAnswers([]); inv(); },
   });
 
   return (
@@ -151,9 +155,34 @@ export default function ParticipantDrawer({ pid, study, onClose }: { pid: number
             </div>
 
             {p.pending_reconsent.length > 0 && (
-              <div className="flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                Re-consent required for {p.pending_reconsent.join(", ")}.
-                <Can perm="consent.write"><Button size="sm" onClick={() => reM.mutate()} disabled={reM.isPending}>Record re-consent</Button></Can>
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <div className="flex items-center justify-between gap-3">
+                  Re-consent required for {p.pending_reconsent.join(", ")}.
+                  {!reQuestions.length && (
+                    <Can perm="consent.write"><Button size="sm" onClick={() => reM.mutate()} disabled={reM.isPending}>Record re-consent</Button></Can>
+                  )}
+                </div>
+                {reQuestions.length > 0 && (
+                  <Can perm="consent.write">
+                    <div className="mt-2 space-y-2">
+                      {reQuestions.map((q, i) => (
+                        <div key={i}>
+                          <p className="text-xs font-medium text-amber-900">{i + 1}. {q.question}</p>
+                          <div className="mt-1 flex flex-wrap gap-3">
+                            {q.options.map((opt, oi) => (
+                              <label key={oi} className="flex items-center gap-1.5 text-xs">
+                                <input type="radio" name={`re-ans-${i}`} checked={reAnswers[i] === oi}
+                                  onChange={() => setReAnswers((a) => { const next = [...a]; next[i] = oi; return next; })} />
+                                {opt}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      <Button size="sm" onClick={() => reM.mutate()} disabled={reM.isPending || reAnswers.length !== reQuestions.length}>Record re-consent</Button>
+                    </div>
+                  </Can>
+                )}
               </div>
             )}
             <ErrorBox error={reM.error} />

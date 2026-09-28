@@ -1,7 +1,7 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -71,11 +71,25 @@ class MonitoringIn(BaseModel):
     findings: str | None = None
 
 
+class ComprehensionQuestion(BaseModel):
+    question: str = Field(min_length=3)
+    options: list[str] = Field(min_length=2, max_length=6)
+    correct_index: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _index_in_range(self):
+        if self.correct_index >= len(self.options):
+            raise ValueError("correct_index must index into options")
+        return self
+
+
 class ConsentDocIn(BaseModel):
     version: str
     language: str = "en"
     content: str = Field(min_length=10, description="Full consent text; only its SHA-256 is stored")
     effective_from: date
+    comprehension_questions: list[ComprehensionQuestion] = Field(
+        default=[], description="Optional short comprehension check administered alongside consent")
 
 
 class AmendmentIn(BaseModel):
@@ -84,6 +98,15 @@ class AmendmentIn(BaseModel):
     approved_on: date
     requires_reconsent: bool = False
     consent_document_id: int | None = None
+
+
+def _redact_answers(doc: dict, role: str) -> dict:
+    """Strips correct_index from comprehension questions for anyone but IEC/Admin, so the person
+    administering the check to a participant can't just read off the answer key."""
+    if role in ("IEC", "ADMIN") or not doc.get("comprehension_questions"):
+        return doc
+    return {**doc, "comprehension_questions": [
+        {"question": q["question"], "options": q["options"]} for q in doc["comprehension_questions"]]}
 
 
 def enrolment_count(conn: Connection, sid: int) -> int:
@@ -136,8 +159,9 @@ def get_study(sid: int, user: User = Depends(require("study.read")), conn=Depend
     s["ethics"] = rows(conn, "SELECT * FROM ethics_approvals WHERE study_id = :s ORDER BY approved_on DESC", {"s": sid})
     s["ctri"] = lifecycle.ctri(conn, sid)
     s["milestones"] = rows(conn, "SELECT * FROM study_milestones WHERE study_id = :s ORDER BY planned_date", {"s": sid})
-    s["consent_documents"] = rows(conn, "SELECT * FROM consent_documents WHERE study_id = :s ORDER BY effective_from",
-                                  {"s": sid})
+    s["consent_documents"] = [_redact_answers(d, user.role) for d in
+                              rows(conn, "SELECT * FROM consent_documents WHERE study_id = :s ORDER BY effective_from",
+                                   {"s": sid})]
     s["amendments"] = rows(conn, "SELECT * FROM protocol_amendments WHERE study_id = :s ORDER BY approved_on", {"s": sid})
     s["enrolled"] = enrolment_count(conn, sid)
     idx = lifecycle.STATES.index(s["state"])
@@ -238,9 +262,12 @@ def add_monitoring(sid: int, body: MonitoringIn, user: User = Depends(require("m
 @router.post("/studies/{sid}/consent-documents", status_code=201)
 def add_consent_doc(sid: int, body: ConsentDocIn, user: User = Depends(require("ethics.create")), conn=Depends(db)):
     study_or_404(conn, sid)
-    r = one(conn, "INSERT INTO consent_documents (study_id, version, language, content_hash, effective_from)"
-                  " VALUES (:s, :v, :l, :h, :e) RETURNING *",
-            {"s": sid, "v": body.version, "l": body.language, "h": sha256_hex(body.content), "e": body.effective_from})
+    import json
+    questions = [q.model_dump() for q in body.comprehension_questions] or None
+    r = one(conn, """INSERT INTO consent_documents (study_id, version, language, content_hash, effective_from,
+                     comprehension_questions) VALUES (:s, :v, :l, :h, :e, CAST(:q AS jsonb)) RETURNING *""",
+            {"s": sid, "v": body.version, "l": body.language, "h": sha256_hex(body.content), "e": body.effective_from,
+             "q": json.dumps(questions)})
     audit.write(conn, user, "CREATE", "consent_document", r["id"], after=r)
     return r
 

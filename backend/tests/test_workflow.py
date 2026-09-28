@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 def _enrol_body(site_id=1, **kw):
     return {"site_id": site_id, "sex": "F", "age_years": 34, "name": "Test Person", "contact": "+91-9000000000",
-            "consent_document_id": 1, "witness_name": "Nurse", **kw}
+            "consent_document_id": 1, "witness_name": "Nurse", "comprehension_answers": [0, 1, 1], **kw}
 
 
 def test_t5_lifecycle_guard(api):

@@ -2,13 +2,71 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { get } from "../api/client";
-import { Badge, Card, Loading, Table } from "../components/ui";
+import { Badge, Card, Empty, Loading, Table } from "../components/ui";
 import { KpiCard } from "../components/widgets";
+
+function DisproportionalityCard({ rows }: { rows: any[] }) {
+  return (
+    <Card
+      title="Disproportionality analysis (PRR / ROR)"
+      actions={<span className="text-xs text-slate-500">Evans criteria: PRR {"≥"} 2, {"χ²"} {"≥"} 4, n {"≥"} 3</span>}
+    >
+      <p className="mb-3 text-sm text-slate-600">
+        Compares each intervention x event pair against the rest of the safety database (Proportional Reporting Ratio and
+        Reporting Odds Ratio with a 95% CI), the same statistical approach used in real pharmacovigilance databases -
+        not just a bare report count.
+      </p>
+      {rows.length === 0 ? <Empty>Not enough data yet for a disproportionality estimate</Empty> : (
+        <Table head={["Intervention", "Event", "a/b/c/d", "PRR", "χ²", "ROR (95% CI)", "Signal"]}>
+          {rows.map((r) => (
+            <tr key={`${r.intervention}-${r.pt}`} className={r.signal ? "bg-amber-50" : ""}>
+              <td className="td">{r.intervention}</td>
+              <td className="td font-medium">{r.pt}</td>
+              <td className="td mono text-xs">{r.a}/{r.b}/{r.c}/{r.d}</td>
+              <td className="td">{r.prr ?? "-"}</td>
+              <td className="td">{r.chi_square}</td>
+              <td className="td text-xs">{r.ror} ({r.ror_ci_low}{"–"}{r.ror_ci_high})</td>
+              <td className="td">{r.signal ? <Badge tone="amber">Signal</Badge> : "-"}</td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </Card>
+  );
+}
+
+function PrakritiCard({ rows }: { rows: any[] }) {
+  return (
+    <Card title="Outcomes by Prakriti (constitutional type)">
+      <p className="mb-3 text-sm text-slate-600">
+        Cross-tabulates the Ayurveda-specific CRF fields against safety and efficacy outcomes - whether a
+        constitutional group shows a different adverse-event rate or a different change in the primary outcome score.
+      </p>
+      {rows.length === 0 ? <Empty>No baseline Prakriti data recorded yet</Empty> : (
+        <Table head={["Prakriti", "n", "Avg. primary score change", "Avg. AEs / participant", "SAEs"]}>
+          {rows.map((r) => (
+            <tr key={r.prakriti}>
+              <td className="td font-medium">{r.prakriti}</td>
+              <td className="td">{r.n}{r.low_n && <Badge tone="gray"> small n</Badge>}</td>
+              <td className="td">{r.avg_score_change ?? "-"}</td>
+              <td className="td">{r.avg_ae_per_participant}</td>
+              <td className="td">{r.sae_total}</td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </Card>
+  );
+}
 
 export default function SignalsPage() {
   const [study, setStudy] = useState("");
   const { data: studies = [] } = useQuery<any[]>({ queryKey: ["studies"], queryFn: () => get("/studies") });
   const { data: s, isLoading } = useQuery<any>({ queryKey: ["signals", study], queryFn: () => get(`/pv/signals${study ? `?study_id=${study}` : ""}`) });
+  const { data: prakriti = [] } = useQuery<any[]>({
+    queryKey: ["prakriti", study],
+    queryFn: () => get(`/dashboard/prakriti${study ? `?study_id=${study}` : ""}`),
+  });
   if (isLoading || !s) return <Loading />;
   const cc = s.clock_compliance;
   const done = cc.on_time + cc.late;
@@ -65,6 +123,8 @@ export default function SignalsPage() {
           <Table head={["Intervention", "Reports"]}>{s.by_intervention.map((r: any) => <tr key={r.intervention}><td className="td">{r.intervention}</td><td className="td">{r.n}</td></tr>)}</Table>
         </Card>
       </div>
+      <DisproportionalityCard rows={s.disproportionality ?? []} />
+      <PrakritiCard rows={prakriti} />
     </div>
   );
 }

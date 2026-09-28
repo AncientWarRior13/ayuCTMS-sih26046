@@ -175,8 +175,12 @@ function Participants({ s }: { s: any }) {
   const mySites = s.sites.filter((x: any) => me?.sites.some((m) => m.id === x.id) && x.activated_on);
   const docs = s.consent_documents.filter((d: any) => Date.parse(d.effective_from) <= Date.now());
   const [f, setF] = useState({ site_id: mySites[0]?.id ?? 0, sex: "F", age_years: 35, name: "", contact: "", consent_document_id: docs.at(-1)?.id ?? 0, witness_name: "", guardian_consent: false });
+  const [answers, setAnswers] = useState<number[]>([]);
+  const selectedDoc = docs.find((d: any) => d.id === f.consent_document_id);
+  const questions: { question: string; options: string[] }[] = selectedDoc?.comprehension_questions ?? [];
   const m = useMutation({
-    mutationFn: () => post(`/studies/${s.id}/participants`, { ...f, site_id: +f.site_id, consent_document_id: +f.consent_document_id || null }),
+    mutationFn: () => post(`/studies/${s.id}/participants`, { ...f, site_id: +f.site_id, consent_document_id: +f.consent_document_id || null,
+      comprehension_answers: questions.length ? answers : undefined }),
     onSuccess: (p: any) => { toast(`Enrolled ${p.subject_code}${p.arm ? ` - randomised to ${p.arm}` : ""}`); setEnrol(false); qc.invalidateQueries({ queryKey: ["participants", s.id] }); qc.invalidateQueries({ queryKey: ["study", String(s.id)] }); },
   });
   if (!can("participant.read")) return <Empty>Your role does not have access to participant-level data.</Empty>;
@@ -231,12 +235,33 @@ function Participants({ s }: { s: any }) {
           <Field label="Full name" hint="Encrypted at rest; visible only to PI and coordinators"><input className="input" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
           <Field label="Contact"><input className="input" value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} /></Field>
           <Field label="Consent document">
-            <select className="input" value={f.consent_document_id} onChange={(e) => setF({ ...f, consent_document_id: +e.target.value })}>
+            <select className="input" value={f.consent_document_id} onChange={(e) => { setF({ ...f, consent_document_id: +e.target.value }); setAnswers([]); }}>
               <option value={0}>- Consent not obtained -</option>
               {docs.map((d: any) => <option key={d.id} value={d.id}>v{d.version} ({d.language}) - sha256 {d.content_hash.slice(0, 10)}...</option>)}
             </select>
           </Field>
           <Field label="Witness"><input className="input" value={f.witness_name} onChange={(e) => setF({ ...f, witness_name: e.target.value })} /></Field>
+          {questions.length > 0 && (
+            <div className="rounded-md border border-brand-200 bg-brand-50 p-3 sm:col-span-2">
+              <p className="mb-2 text-xs font-medium text-brand-900">Comprehension check - read each question aloud and record the participant's answer</p>
+              <div className="space-y-3">
+                {questions.map((q, i) => (
+                  <div key={i}>
+                    <p className="text-sm font-medium text-slate-800">{i + 1}. {q.question}</p>
+                    <div className="mt-1 flex flex-wrap gap-3">
+                      {q.options.map((opt, oi) => (
+                        <label key={oi} className="flex items-center gap-1.5 text-sm">
+                          <input type="radio" name={`ans-${i}`} required checked={answers[i] === oi}
+                            onChange={() => setAnswers((a) => { const next = [...a]; next[i] = oi; return next; })} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {f.age_years < 18 && (
             <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={f.guardian_consent} onChange={(e) => setF({ ...f, guardian_consent: e.target.checked })} /> Verifiable guardian consent obtained (participant is a minor)</label>
           )}
@@ -367,17 +392,37 @@ function Documents({ s }: { s: any }) {
   const inv = () => qc.invalidateQueries({ queryKey: ["study", String(s.id)] });
   const { can } = useAuth();
   const { data: mv = [] } = useQuery<any[]>({ queryKey: ["monitoring", s.id], queryFn: () => get(`/studies/${s.id}/monitoring-visits`), enabled: can("monitoring.read") });
-  const [doc, setDoc] = useState({ version: "", language: "en", content: "", effective_from: "" });
+  const [doc, setDoc] = useState<{ version: string; language: string; content: string; effective_from: string;
+    comprehension_questions: { question: string; options: string[]; correct_index: number }[] }>(
+    { version: "", language: "en", content: "", effective_from: "", comprehension_questions: [] });
+  const addQuestion = () => setDoc({ ...doc, comprehension_questions: [...doc.comprehension_questions,
+    { question: "", options: ["", ""], correct_index: 0 }] });
+  const updateQuestion = (i: number, patch: Partial<{ question: string; options: string[]; correct_index: number }>) =>
+    setDoc({ ...doc, comprehension_questions: doc.comprehension_questions.map((q, j) => (j === i ? { ...q, ...patch } : q)) });
+  const removeQuestion = (i: number) => setDoc({ ...doc, comprehension_questions: doc.comprehension_questions.filter((_, j) => j !== i) });
   const [am, setAm] = useState({ version: "", summary: "", approved_on: "", requires_reconsent: false, consent_document_id: 0 });
   const [visit, setVisit] = useState({ site_id: s.sites[0]?.id ?? 0, visit_date: "", findings: "" });
-  const docM = useMutation({ mutationFn: () => post(`/studies/${s.id}/consent-documents`, doc), onSuccess: () => { toast("Consent document versioned"); inv(); } });
+  const docM = useMutation({
+    mutationFn: () => post(`/studies/${s.id}/consent-documents`, doc),
+    onSuccess: () => {
+      toast("Consent document versioned");
+      setDoc({ version: "", language: "en", content: "", effective_from: "", comprehension_questions: [] });
+      inv();
+    },
+  });
   const amM = useMutation({ mutationFn: () => post(`/studies/${s.id}/amendments`, { ...am, consent_document_id: am.consent_document_id || null }), onSuccess: () => { toast("Amendment recorded"); inv(); } });
   const mvM = useMutation({ mutationFn: () => post(`/studies/${s.id}/monitoring-visits`, { ...visit, site_id: +visit.site_id }), onSuccess: () => { toast("Monitoring visit logged"); qc.invalidateQueries({ queryKey: ["monitoring", s.id] }); } });
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Card title="Consent documents (versioned)">
-        <Table head={["Version", "Language", "Effective", "Content SHA-256"]} empty={!s.consent_documents.length}>
-          {s.consent_documents.map((d: any) => <tr key={d.id}><td className="td">v{d.version}</td><td className="td">{d.language}</td><td className="td">{fmtDate(d.effective_from)}</td><td className="td mono" title={d.content_hash}>{d.content_hash.slice(0, 16)}...</td></tr>)}
+        <Table head={["Version", "Language", "Effective", "Content SHA-256", "Comprehension check"]} empty={!s.consent_documents.length}>
+          {s.consent_documents.map((d: any) => (
+            <tr key={d.id}>
+              <td className="td">v{d.version}</td><td className="td">{d.language}</td><td className="td">{fmtDate(d.effective_from)}</td>
+              <td className="td mono" title={d.content_hash}>{d.content_hash.slice(0, 16)}...</td>
+              <td className="td">{d.comprehension_questions?.length ? <Badge tone="teal">{d.comprehension_questions.length} question{d.comprehension_questions.length > 1 ? "s" : ""}</Badge> : "-"}</td>
+            </tr>
+          ))}
         </Table>
         <Can perm="ethics.create">
           <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={(e) => { e.preventDefault(); docM.mutate(); }}>
@@ -385,6 +430,28 @@ function Documents({ s }: { s: any }) {
             <Field label="Language"><select className="input" value={doc.language} onChange={(e) => setDoc({ ...doc, language: e.target.value })}><option value="en">English</option><option value="hi">Hindi</option></select></Field>
             <Field label="Effective from"><input className="input" type="date" required value={doc.effective_from} onChange={(e) => setDoc({ ...doc, effective_from: e.target.value })} /></Field>
             <div className="sm:col-span-3"><Field label="Full consent text (only its hash is stored)"><textarea className="input" rows={3} required minLength={10} value={doc.content} onChange={(e) => setDoc({ ...doc, content: e.target.value })} /></Field></div>
+            <div className="rounded-md border border-slate-200 p-3 sm:col-span-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-medium text-slate-600">Comprehension check (optional) - a short quiz administered alongside consent, per ICH-GCP informed-consent practice</p>
+                <Button type="button" size="sm" variant="secondary" onClick={addQuestion}>Add question</Button>
+              </div>
+              {doc.comprehension_questions.map((q, i) => (
+                <div key={i} className="mb-3 space-y-2 rounded border border-slate-100 bg-slate-50 p-2">
+                  <div className="flex gap-2">
+                    <input className="input" placeholder="Question" required value={q.question} onChange={(e) => updateQuestion(i, { question: e.target.value })} />
+                    <Button type="button" size="sm" variant="ghost" onClick={() => removeQuestion(i)}>Remove</Button>
+                  </div>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} className="flex items-center gap-2">
+                      <input type="radio" name={`correct-${i}`} checked={q.correct_index === oi} onChange={() => updateQuestion(i, { correct_index: oi })} title="Correct answer" />
+                      <input className="input" placeholder={`Option ${oi + 1}`} required value={opt} onChange={(e) => updateQuestion(i, { options: q.options.map((o, j) => (j === oi ? e.target.value : o)) })} />
+                      {q.options.length > 2 && <Button type="button" size="sm" variant="ghost" onClick={() => updateQuestion(i, { options: q.options.filter((_, j) => j !== oi), correct_index: q.correct_index >= oi ? Math.max(0, q.correct_index - 1) : q.correct_index })}>x</Button>}
+                    </div>
+                  ))}
+                  {q.options.length < 6 && <Button type="button" size="sm" variant="ghost" onClick={() => updateQuestion(i, { options: [...q.options, ""] })}>+ option</Button>}
+                </div>
+              ))}
+            </div>
             <div className="sm:col-span-3"><ErrorBox error={docM.error} /></div>
             <div><Button size="sm" disabled={docM.isPending}>Add version</Button></div>
           </form>

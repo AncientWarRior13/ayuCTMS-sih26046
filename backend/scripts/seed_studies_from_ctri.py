@@ -24,6 +24,19 @@ USERS = [("pi@demo.test", "Dr. Meera Iyer", "PI", ["SITE-01", "SITE-02", "SITE-0
          ("admin@demo.test", "Priya Sharma", "ADMIN", []),
          ("regulator@demo.test", "Inspector Anil Verma", "REGULATOR", [])]
 
+COMPREHENSION_QUESTIONS = [
+    {"question": "Can you stop taking part in the study at any time without giving a reason?",
+     "options": ["Yes, at any time", "Only with the PI's written permission", "No, once enrolled you must complete it"],
+     "correct_index": 0},
+    {"question": "Will you be paid to take part in this study?",
+     "options": ["Yes, a large payment is guaranteed", "No, this is not a paid study", "Only if you complete all visits"],
+     "correct_index": 1},
+    {"question": "If you have a side effect, who should you contact first?",
+     "options": ["Wait until the next scheduled visit", "The study doctor or coordinator listed in the consent form",
+                 "No one; side effects are expected and not reported"],
+     "correct_index": 1},
+]
+
 CRF_SCHEMA = {
     "title": "Baseline and Ayurveda assessment",
     "type": "object",
@@ -86,10 +99,11 @@ def run(conn) -> dict:
             reg = today + timedelta(days=int(r["ctri_offset_days"]))
             conn.execute(text("INSERT INTO ctri_registrations (study_id, ctri_number, registered_on, last_updated_on)"
                               " VALUES (:s, :n, :r, :u)"), {"s": sid, "n": r["ctri_number"], "r": reg, "u": reg})
-        doc = conn.execute(text("INSERT INTO consent_documents (study_id, version, language, content_hash, effective_from)"
-                                " VALUES (:s, '1.0', 'en', :h, :e) RETURNING id"),
+        doc = conn.execute(text("""INSERT INTO consent_documents (study_id, version, language, content_hash,
+                                effective_from, comprehension_questions)
+                                VALUES (:s, '1.0', 'en', :h, :e, CAST(:q AS jsonb)) RETURNING id"""),
                            {"s": sid, "h": sha256_hex(f"Informed consent v1.0 for {r['protocol_no']}"),
-                            "e": approved}).scalar()
+                            "e": approved, "q": json.dumps(COMPREHENSION_QUESTIONS)}).scalar()
         conn.execute(text("INSERT INTO consent_documents (study_id, version, language, content_hash, effective_from)"
                           " VALUES (:s, '1.0', 'hi', :h, :e)"),
                      {"s": sid, "h": sha256_hex(f"Suchit sahmati v1.0 {r['protocol_no']}"), "e": approved})

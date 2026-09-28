@@ -8,6 +8,8 @@ from ..core.deps import User, db, require
 from ..services import audit
 from ..services.alerts import AUDIENCE, clock_pct, hub
 from ..services.common import ensure_own_study, get_or_404, kpi, one, participant_or_404, rows, study_or_404
+from ..services.herb_interactions import check as check_interactions
+from ..services.pv_stats import disproportionality
 from ..services.report import sae_pdf, sae_report
 
 router = APIRouter(tags=["pharmacovigilance"])
@@ -124,7 +126,21 @@ def create_ae(body: AECreate, user: User = Depends(require("ae.create")), conn=D
         hub.emit("sae_created", {"id": a["id"], "study_id": s["id"], "subject_code": p["subject_code"],
                                  "description": a["description"]}, AUDIENCE["SAE_CREATED"])
         hub.kick()
-    return {**a, "clocks": clocks}
+    interactions = check_interactions(conn, a["suspect_intervention"], a["concomitant_meds"])
+    if interactions:
+        audit.write(conn, user, "INTERACTION_FLAGGED", "adverse_event", a["id"],
+                    after={"interactions": interactions}, reason="Herb-drug interaction reference match")
+        if any(i["severity"] == "MAJOR" for i in interactions):
+            hub.emit("interaction_warning", {"adverse_event_id": a["id"], "subject_code": p["subject_code"],
+                                             "interactions": interactions}, AUDIENCE["SAE_CREATED"])
+    return {**a, "clocks": clocks, "interactions": interactions}
+
+
+@router.get("/interactions/check")
+def interactions_check(intervention: str = Query(min_length=1), concomitant_meds: str = Query(min_length=1),
+                       user: User = Depends(require("ae.read")), conn=Depends(db)):
+    """Standalone herb-drug interaction lookup, usable from the AE form before submitting."""
+    return check_interactions(conn, intervention, concomitant_meds)
 
 
 @router.post("/ae/{aid}/causality")
@@ -198,6 +214,7 @@ def signals(study_id: int | None = None, user: User = Depends(require("pv.signal
     return {
         "threshold": thr,
         "by_pt": by_pt,
+        "disproportionality": disproportionality(conn, study_id),
         "by_soc": rows(conn, f"""SELECT COALESCE(m.soc, 'Unknown') AS soc, count(*) AS n FROM adverse_events a
                                 LEFT JOIN lookup_meddra_stub m ON m.pt_name = a.meddra_pt WHERE {f} GROUP BY 1 ORDER BY n DESC""", p),
         "by_study": rows(conn, f"""SELECT s.protocol_no, count(*) AS n, count(*) FILTER (WHERE a.is_serious) AS serious

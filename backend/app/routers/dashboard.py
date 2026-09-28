@@ -8,6 +8,8 @@ from ..core.security import decode
 from ..services import audit
 from ..services.alerts import AUDIENCE, hub
 from ..services.common import get_or_404, kpi, one, rows, study_or_404
+from ..services.prakriti_analysis import by_prakriti
+from ..services.predictive_risk import participant_risk
 
 router = APIRouter(tags=["dashboard & alerts"])
 
@@ -126,6 +128,19 @@ def risk_heatmap(user: User = Depends(require("dashboard.read")), conn=Depends(d
         c["score"] = round(sum(indicators.values()))
         c["band"] = "HIGH" if c["score"] >= 50 else "MEDIUM" if c["score"] >= 25 else "LOW"
     return cells
+
+
+@router.get("/dashboard/predictive-risk")
+def predictive_risk(study_id: int | None = None, user: User = Depends(require("dashboard.read")), conn=Depends(db)):
+    """Per-participant deviation risk from leading indicators (visit slippage, query pile-up,
+    site workload), so monitoring can target participants before a deviation occurs."""
+    return participant_risk(conn, study_id)
+
+
+@router.get("/dashboard/prakriti")
+def prakriti_analysis(study_id: int | None = None, user: User = Depends(require("dashboard.read")), conn=Depends(db)):
+    """Adverse-event rate and primary-outcome change stratified by Prakriti (constitutional type)."""
+    return by_prakriti(conn, study_id)
 
 
 @router.get("/alerts")

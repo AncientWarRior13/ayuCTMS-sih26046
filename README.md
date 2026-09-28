@@ -31,7 +31,31 @@ is included anywhere in the codebase.
   in the API and as PostgreSQL row-level security for site isolation. The Regulator role is
   read-only everywhere, by test.
 - **Risk-based monitoring** — a study x site heatmap scored from deviation, query, visit and
-  safety indicators.
+  safety indicators, plus a **predictive per-participant risk score** from leading indicators
+  (visit-window slippage, query pile-up, site workload) so monitoring can act before a deviation
+  is logged, not just after.
+
+### Differentiators beyond a standard CTMS
+
+- **Disproportionality signal detection (PRR/ROR)** — the safety signals view compares each
+  intervention x event pair against the rest of the database using the Proportional Reporting
+  Ratio and Reporting Odds Ratio with a 95% CI and Evans-criteria thresholds, the same statistical
+  approach real pharmacovigilance databases use — not a bare report-count trigger.
+- **Herb-drug interaction checker** — a curated Ayurveda herb x allopathic drug-class reference
+  table is matched live against the study intervention and a participant's concomitant
+  medicines, surfacing severity, mechanism and a recommendation as the PV officer types, and
+  again on the AE detail page. Standard pharmacovigilance tooling has no model of Ayurveda
+  formulations at all.
+- **Prakriti-stratified outcomes** — the Ayurveda-specific CRF fields (Prakriti, Vikriti, Agni)
+  are cross-tabulated against adverse-event rate and primary-outcome change, connecting data the
+  CRF already collects to the analytics layer, which off-the-shelf CTMS products have no way to do.
+- **Consent comprehension checks** — a consent document can carry an optional short quiz
+  administered alongside signing (ICH-GCP informed-consent practice), scored server-side against
+  an answer key that is never sent to whoever administers it.
+- **Audit checkpoint anchoring** — a Merkle checkpoint can be marked as published externally (a
+  public gist, a timestamping service, an email to the Ethics Committee), so a later rewrite of
+  history becomes detectable by anyone who kept a copy — including against a database
+  administrator, which an unanchored checkpoint cannot protect against.
 
 See [docs/](docs/) for the original requirements, architecture and standards-mapping notes, and
 `docs/05-standards-compliance-mapping.md` for what is fully implemented versus what still needs a

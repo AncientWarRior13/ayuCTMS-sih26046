@@ -1,11 +1,17 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from ..core.deps import User, db, require
 from ..services import audit
-from ..services.common import one, rows
+from ..services.common import get_or_404, one, rows
 
 router = APIRouter(prefix="/audit", tags=["audit"])
+
+
+class AnchorIn(BaseModel):
+    anchor_url: str = Field(min_length=8, description="Where the root was published externally: a public"
+                            " gist, an OpenTimestamps proof, an email to the IEC, etc.")
 
 
 @router.get("")
@@ -46,6 +52,34 @@ def create_checkpoint(user: User = Depends(require("audit.checkpoint")), conn=De
     r = one(conn, "INSERT INTO audit_checkpoints (last_audit_id, row_count, merkle_root, created_by)"
                   " VALUES (:l, :n, :m, :u) RETURNING *", {"l": last, "n": len(hashes), "m": root, "u": user.id})
     audit.write(conn, user, "CHECKPOINT", "audit_log", last, after={"merkle_root": root, "rows": len(hashes)})
+    return r
+
+
+@router.get("/checkpoints/{cid}/anchor-text")
+def anchor_text(cid: int, user: User = Depends(require("audit.checkpoint")), conn=Depends(db)):
+    """Canonical text to publish externally (paste into a public gist, email to the IEC, submit
+    to an OpenTimestamps-style service) so the checkpoint's root has a witness outside this DB."""
+    c = get_or_404(conn, "SELECT * FROM audit_checkpoints WHERE id = :id", {"id": cid}, "Checkpoint")
+    text = (f"AyuCTMS audit checkpoint #{c['id']}\n"
+            f"created_at: {c['created_at'].isoformat()}\n"
+            f"last_audit_id: {c['last_audit_id']}\n"
+            f"row_count: {c['row_count']}\n"
+            f"merkle_root: {c['merkle_root']}\n")
+    return {"text": text}
+
+
+@router.post("/checkpoints/{cid}/anchor")
+def anchor_checkpoint(cid: int, body: AnchorIn, user: User = Depends(require("audit.checkpoint")), conn=Depends(db)):
+    """Record where a checkpoint's Merkle root was published outside the system. Until anchored,
+    a checkpoint only proves integrity to someone who trusts this database's own record of it;
+    once anchored somewhere the DB owner doesn't control, a later rewrite of history becomes
+    detectable by anyone who kept a copy of the published root - including a superuser rewrite."""
+    before = get_or_404(conn, "SELECT * FROM audit_checkpoints WHERE id = :id", {"id": cid}, "Checkpoint")
+    if before["anchored_at"]:
+        raise HTTPException(409, "Checkpoint is already anchored")
+    r = one(conn, "UPDATE audit_checkpoints SET anchor_url = :u, anchored_at = now(), anchored_by = :a"
+                  " WHERE id = :id RETURNING *", {"u": body.anchor_url, "a": user.id, "id": cid})
+    audit.write(conn, user, "ANCHOR", "audit_checkpoint", cid, before, r)
     return r
 
 

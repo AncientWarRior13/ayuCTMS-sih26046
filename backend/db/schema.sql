@@ -115,7 +115,13 @@ CREATE TABLE audit_checkpoints (
   last_audit_id BIGINT NOT NULL,
   row_count BIGINT NOT NULL,
   merkle_root TEXT NOT NULL,
-  created_by INT REFERENCES users(id)
+  created_by INT REFERENCES users(id),
+  -- Novel: a checkpoint only protects history against a DB administrator once its root is
+  -- witnessed somewhere the administrator doesn't control. anchor_url records where the root
+  -- was published externally (a public gist, OpenTimestamps proof, printed/emailed to the IEC).
+  anchor_url TEXT,
+  anchored_at TIMESTAMPTZ,
+  anchored_by INT REFERENCES users(id)
 );
 
 -- ---------- Participants ----------
@@ -147,6 +153,9 @@ CREATE TABLE consent_documents (
   language TEXT NOT NULL DEFAULT 'en',
   content_hash TEXT NOT NULL,
   effective_from DATE NOT NULL,
+  -- Novel: ICH-GCP/DPDP increasingly expect *informed* consent, not just signed consent.
+  -- Optional short comprehension check: [{question, options: [...], correct_index}].
+  comprehension_questions JSONB,
   UNIQUE (study_id, version, language)
 );
 
@@ -169,6 +178,8 @@ CREATE TABLE consents (
   participant_id INT NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
   consent_document_id INT NOT NULL REFERENCES consent_documents(id),
   consented_at TIMESTAMPTZ NOT NULL,
+  comprehension_answers JSONB,       -- participant's selected option indices, same order as the document's questions
+  comprehension_score NUMERIC,       -- fraction correct, 0-1; NULL if the document has no questions
   witness_name TEXT,
   guardian_consent BOOLEAN NOT NULL DEFAULT FALSE,
   withdrawn_at TIMESTAMPTZ,
@@ -301,6 +312,20 @@ CREATE TABLE alerts (
 -- Stub lookups (replace with licensed dictionaries in production)
 CREATE TABLE lookup_meddra_stub (pt_code TEXT PRIMARY KEY, pt_name TEXT NOT NULL, soc TEXT);
 CREATE TABLE lookup_ayush_morbidity (code TEXT PRIMARY KEY, term TEXT NOT NULL, system TEXT);
+
+-- Curated herb-drug interaction reference (novel: Ayurveda formulations carry interaction and
+-- heavy-metal-content risk profiles that standard Western pharmacovigilance tooling doesn't
+-- model). Matched at AE-entry time against concomitant_meds free text.
+CREATE TABLE lookup_herb_drug_interaction (
+  id SERIAL PRIMARY KEY,
+  herb TEXT NOT NULL,               -- Ayurveda herb/formulation, matched against study intervention
+  drug_class TEXT NOT NULL,         -- allopathic drug or class, matched against concomitant_meds text
+  drug_synonyms TEXT[] NOT NULL DEFAULT '{}',  -- alternate names/brands to match in free text
+  severity TEXT NOT NULL CHECK (severity IN ('MINOR', 'MODERATE', 'MAJOR')),
+  mechanism TEXT NOT NULL,
+  recommendation TEXT NOT NULL,
+  source_note TEXT NOT NULL
+);
 
 CREATE TABLE lookup_cdisc_ct (
   codelist TEXT NOT NULL,
