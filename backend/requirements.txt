@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0,<2.1
+psycopg[binary]
+pydantic>=2
+pydantic-settings
+python-jose[cryptography]
+argon2-cffi
+cryptography
+pyotp
+fhir.resources
+reportlab
+pytest
+httpx

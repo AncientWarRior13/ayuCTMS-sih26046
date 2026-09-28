@@ -1,0 +1,22 @@
+codelist,submission_value,preferred_term
+SEX,M,Male
+SEX,F,Female
+SEX,U,Unknown
+AGEU,YEARS,Years
+NY,Y,Yes
+NY,N,No
+AESEV,MILD,Mild
+AESEV,MODERATE,Moderate
+AESEV,SEVERE,Severe
+OUT,RECOVERED/RESOLVED,Recovered/Resolved
+OUT,RECOVERING/RESOLVING,Recovering/Resolving
+OUT,NOT RECOVERED/NOT RESOLVED,Not Recovered/Not Resolved
+OUT,RECOVERED/RESOLVED WITH SEQUELAE,Recovered/Resolved with Sequelae
+OUT,FATAL,Fatal
+OUT,UNKNOWN,Unknown
+REL,RELATED,Related
+REL,POSSIBLY RELATED,Possibly Related
+REL,UNLIKELY RELATED,Unlikely Related
+REL,NOT RELATED,Not Related
+DOMAIN,DM,Demographics
+DOMAIN,AE,Adverse Events

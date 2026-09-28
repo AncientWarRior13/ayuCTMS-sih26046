@@ -1,0 +1,31 @@
+code,term,system
+AYU-DEMO-001,Anidra (insomnia),Ayurveda
+AYU-DEMO-002,Shirahshula (headache),Ayurveda
+AYU-DEMO-003,Bhrama (vertigo),Ayurveda
+AYU-DEMO-004,Hrillasa (nausea),Ayurveda
+AYU-DEMO-005,Chhardi (vomiting),Ayurveda
+AYU-DEMO-006,Atisara (diarrhoea),Ayurveda
+AYU-DEMO-007,Vibandha (constipation),Ayurveda
+AYU-DEMO-008,Amlapitta (hyperacidity),Ayurveda
+AYU-DEMO-009,Ajirna (indigestion),Ayurveda
+AYU-DEMO-010,Adhmana (abdominal distension),Ayurveda
+AYU-DEMO-011,Kamala (jaundice),Ayurveda
+AYU-DEMO-012,Madhumeha (diabetes),Ayurveda
+AYU-DEMO-013,Prameha (urinary disorders),Ayurveda
+AYU-DEMO-014,Kandu (pruritus),Ayurveda
+AYU-DEMO-015,Sheetapitta (urticaria),Ayurveda
+AYU-DEMO-016,Kotha (rash),Ayurveda
+AYU-DEMO-017,Hridrava (palpitation),Ayurveda
+AYU-DEMO-018,Klama (fatigue),Ayurveda
+AYU-DEMO-019,Jwara (fever),Ayurveda
+AYU-DEMO-020,Shotha (oedema),Ayurveda
+AYU-DEMO-021,Chittodvega (anxiety),Ayurveda
+AYU-DEMO-022,Sandhishula (joint pain),Ayurveda
+AYU-DEMO-023,Katishula (low back pain),Ayurveda
+AYU-DEMO-024,Kasa (cough),Ayurveda
+AYU-DEMO-025,Shwasa (dyspnoea),Ayurveda
+AYU-DEMO-026,Pratishyaya (common cold),Ayurveda
+AYU-DEMO-027,Mutrakrichchhra (dysuria),Ayurveda
+AYU-DEMO-028,Timira (blurred vision),Ayurveda
+AYU-DEMO-029,Karnanada (tinnitus),Ayurveda
+AYU-DEMO-030,Aruchi (anorexia),Ayurveda

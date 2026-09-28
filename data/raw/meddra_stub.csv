@@ -1,0 +1,51 @@
+pt_code,pt_name,soc
+STUB-0001,Headache,Nervous system disorders
+STUB-0002,Dizziness,Nervous system disorders
+STUB-0003,Somnolence,Nervous system disorders
+STUB-0004,Paraesthesia,Nervous system disorders
+STUB-0005,Syncope,Nervous system disorders
+STUB-0006,Nausea,Gastrointestinal disorders
+STUB-0007,Vomiting,Gastrointestinal disorders
+STUB-0008,Diarrhoea,Gastrointestinal disorders
+STUB-0009,Constipation,Gastrointestinal disorders
+STUB-0010,Abdominal pain upper,Gastrointestinal disorders
+STUB-0011,Dyspepsia,Gastrointestinal disorders
+STUB-0012,Flatulence,Gastrointestinal disorders
+STUB-0013,Gastritis,Gastrointestinal disorders
+STUB-0014,Hepatitis,Hepatobiliary disorders
+STUB-0015,Drug-induced liver injury,Hepatobiliary disorders
+STUB-0016,Hepatic enzyme increased,Investigations
+STUB-0017,Blood glucose decreased,Investigations
+STUB-0018,Blood pressure increased,Investigations
+STUB-0019,Weight decreased,Investigations
+STUB-0020,Hypoglycaemia,Metabolism and nutrition disorders
+STUB-0021,Decreased appetite,Metabolism and nutrition disorders
+STUB-0022,Rash,Skin and subcutaneous tissue disorders
+STUB-0023,Pruritus,Skin and subcutaneous tissue disorders
+STUB-0024,Urticaria,Skin and subcutaneous tissue disorders
+STUB-0025,Dermatitis allergic,Skin and subcutaneous tissue disorders
+STUB-0026,Palpitations,Cardiac disorders
+STUB-0027,Tachycardia,Cardiac disorders
+STUB-0028,Chest pain,General disorders and administration site conditions
+STUB-0029,Fatigue,General disorders and administration site conditions
+STUB-0030,Pyrexia,General disorders and administration site conditions
+STUB-0031,Oedema peripheral,General disorders and administration site conditions
+STUB-0032,Malaise,General disorders and administration site conditions
+STUB-0033,Anxiety,Psychiatric disorders
+STUB-0034,Insomnia,Psychiatric disorders
+STUB-0035,Irritability,Psychiatric disorders
+STUB-0036,Arthralgia,Musculoskeletal and connective tissue disorders
+STUB-0037,Myalgia,Musculoskeletal and connective tissue disorders
+STUB-0038,Back pain,Musculoskeletal and connective tissue disorders
+STUB-0039,Cough,Respiratory thoracic and mediastinal disorders
+STUB-0040,Dyspnoea,Respiratory thoracic and mediastinal disorders
+STUB-0041,Nasopharyngitis,Infections and infestations
+STUB-0042,Urinary tract infection,Infections and infestations
+STUB-0043,Hypersensitivity,Immune system disorders
+STUB-0044,Anaphylactic reaction,Immune system disorders
+STUB-0045,Vision blurred,Eye disorders
+STUB-0046,Tinnitus,Ear and labyrinth disorders
+STUB-0047,Hypotension,Vascular disorders
+STUB-0048,Hot flush,Vascular disorders
+STUB-0049,Acute kidney injury,Renal and urinary disorders
+STUB-0050,Menstruation irregular,Reproductive system and breast disorders

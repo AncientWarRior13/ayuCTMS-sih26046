@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: AyuCTMS API
+  version: 0.1.0
+  description: >
+    REST API for the AIIA Clinical Trials Dashboard (SIH26046). All mutating endpoints
+    write an audit row. Roles: PI, COORDINATOR, MONITOR, IEC, PV, ADMIN, REGULATOR.
+servers:
+  - url: http://localhost:8000/api/v1
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    Error: { type: object, properties: { detail: { type: string } } }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties: { email: { type: string }, password: { type: string }, totp: { type: string } }
+    TokenPair:
+      type: object
+      properties: { access_token: { type: string }, refresh_token: { type: string }, role: { type: string } }
+    Study:
+      type: object
+      properties:
+        id: { type: integer }
+        protocol_no: { type: string }
+        title: { type: string }
+        type: { type: string, enum: [INTERVENTIONAL, OBSERVATIONAL] }
+        intervention: { type: string }
+        state: { type: string, enum: [DRAFT, PROTOCOL_APPROVED, EC_APPROVED, CTRI_REGISTERED, SITE_ACTIVE, ENROLLING, FOLLOW_UP, CLOSED] }
+        pi_user_id: { type: integer }
+        target_sample: { type: integer }
+    StudyCreate:
+      type: object
+      required: [protocol_no, title, type, target_sample]
+      properties:
+        protocol_no: { type: string }
+        title: { type: string }
+        type: { type: string }
+        intervention: { type: string }
+        target_sample: { type: integer }
+        site_ids: { type: array, items: { type: integer } }
+    Transition:
+      type: object
+      required: [target_state]
+      properties: { target_state: { type: string }, reason: { type: string } }
+    Participant:
+      type: object
+      properties:
+        id: { type: integer }
+        subject_code: { type: string }
+        status: { type: string }
+        arm: { type: string }
+        site_id: { type: integer }
+    ParticipantCreate:
+      type: object
+      required: [site_id, sex, age_years]
+      properties:
+        site_id: { type: integer }
+        sex: { type: string }
+        age_years: { type: integer }
+        name: { type: string, description: stored encrypted in participant_pii }
+    AdverseEventCreate:
+      type: object
+      required: [participant_id, onset_date, awareness_at, description, severity]
+      properties:
+        participant_id: { type: integer }
+        onset_date: { type: string, format: date }
+        awareness_at: { type: string, format: date-time }
+        description: { type: string }
+        severity: { type: string, enum: [MILD, MODERATE, SEVERE] }
+        is_serious: { type: boolean }
+        seriousness_criteria: { type: array, items: { type: string } }
+        suspect_intervention: { type: string }
+        meddra_pt: { type: string }
+        ayush_morbidity_code: { type: string }
+    Causality:
+      type: object
+      properties:
+        causality: { type: string }
+        naranjo_score: { type: integer }
+        reason: { type: string }
+    Clock:
+      type: object
+      properties:
+        id: { type: integer }
+        rule_key: { type: string }
+        due_at: { type: string, format: date-time }
+        status: { type: string }
+        pct_elapsed: { type: number }
+    AuditRow:
+      type: object
+      properties:
+        id: { type: integer }
+        occurred_at: { type: string, format: date-time }
+        actor_id: { type: integer }
+        action: { type: string }
+        entity_type: { type: string }
+        entity_id: { type: string }
+        row_hash: { type: string }
+        prev_hash: { type: string }
+paths:
+  /auth/login:
+    post:
+      security: []
+      summary: Login
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '401': { description: Bad credentials }
+        '423': { description: Locked }
+  /auth/refresh:
+    post: { security: [], summary: Refresh access token, responses: { '200': { description: OK } } }
+  /auth/me:
+    get: { summary: Current user and permissions, responses: { '200': { description: OK } } }
+
+  /studies:
+    get:
+      summary: List studies (role/site scoped)
+      parameters:
+        - { name: state, in: query, schema: { type: string } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Study' } } } } } }
+    post:
+      summary: Create study (PI, ADMIN)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/StudyCreate' } } } }
+      responses: { '201': { description: Created } }
+  /studies/{id}:
+    get:
+      summary: Study detail with KPIs
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+    patch:
+      summary: Update study (PI own, ADMIN); reason required
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+  /studies/{id}/transition:
+    post:
+      summary: Advance lifecycle (guarded)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Transition' } } } }
+      responses:
+        '200': { description: Transitioned }
+        '409': { description: Precondition failed (e.g. no CTRI number) }
+  /studies/{id}/ethics-approvals:
+    post: { summary: Add ethics approval (IEC, ADMIN), parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+  /studies/{id}/ctri:
+    put: { summary: Set CTRI registration (PI, ADMIN), parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /studies/{id}/milestones:
+    get: { summary: List milestones, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+    post: { summary: Add milestone, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+
+  /studies/{id}/participants:
+    get:
+      summary: List participants (pseudonymised)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Participant' } } } } } }
+    post:
+      summary: Screen/enrol participant (COORDINATOR)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ParticipantCreate' } } } }
+      responses: { '201': { description: Created }, '409': { description: Study not in ENROLLING state or consent missing } }
+  /participants/{pid}/consent:
+    post: { summary: Record consent, parameters: [{ name: pid, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+  /participants/{pid}/withdraw:
+    post: { summary: Record consent withdrawal, parameters: [{ name: pid, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /participants/{pid}/visits:
+    get: { summary: List visits, parameters: [{ name: pid, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+    post: { summary: Schedule visit, parameters: [{ name: pid, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+  /visits/{vid}/crf:
+    post: { summary: Submit CRF entry (reason_for_change on edit), parameters: [{ name: vid, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+
+  /studies/{id}/deviations:
+    get: { summary: List deviations, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+    post: { summary: Log deviation, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+  /deviations/{did}/signoff:
+    post: { summary: Monitor sign-off, parameters: [{ name: did, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /studies/{id}/queries:
+    get: { summary: List queries, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+    post: { summary: Raise query (MONITOR), parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '201': { description: Created } } }
+  /queries/{qid}/answer:
+    post: { summary: Answer query, parameters: [{ name: qid, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /queries/{qid}/close:
+    post: { summary: Close query, parameters: [{ name: qid, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+
+  /ae:
+    get:
+      summary: List AE/SAE (PV sees all; others by scope)
+      parameters:
+        - { name: study_id, in: query, schema: { type: integer } }
+        - { name: serious, in: query, schema: { type: boolean } }
+      responses: { '200': { description: OK } }
+    post:
+      summary: Report AE/SAE. If is_serious, clocks start from regulatory_rules.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AdverseEventCreate' } } } }
+      responses: { '201': { description: Created with clocks } }
+  /ae/{aid}/causality:
+    post:
+      summary: Assess causality (PV, PI)
+      parameters: [{ name: aid, in: path, required: true, schema: { type: integer } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Causality' } } } }
+      responses: { '200': { description: OK } }
+  /ae/{aid}/clocks:
+    get:
+      summary: Clocks for an AE with % elapsed
+      parameters: [{ name: aid, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Clock' } } } } } }
+  /ae/{aid}/submit-report:
+    post:
+      summary: Mark a regulatory report submitted; completes the clock
+      parameters: [{ name: aid, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: OK } }
+  /ae/{aid}/report:
+    get:
+      summary: Generate SAE report draft (JSON or PDF)
+      parameters:
+        - { name: aid, in: path, required: true, schema: { type: integer } }
+        - { name: format, in: query, schema: { type: string, enum: [json, pdf] } }
+      responses: { '200': { description: OK } }
+  /pv/signals:
+    get:
+      summary: Aggregate safety signals by PT, SOC, study, intervention
+      responses: { '200': { description: OK } }
+
+  /dashboard/portfolio:
+    get: { summary: Portfolio KPIs (studies by state, enrolment vs target, overdue, safety), responses: { '200': { description: OK } } }
+  /dashboard/study/{id}:
+    get: { summary: Per-study drill-down data, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /alerts:
+    get: { summary: Current alerts for the user, responses: { '200': { description: OK } } }
+  /alerts/{id}/ack:
+    post: { summary: Acknowledge alert, parameters: [{ name: id, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /ws/alerts:
+    get: { summary: WebSocket stream of alerts and clock ticks (token in query), responses: { '101': { description: Switching protocols } } }
+
+  /audit:
+    get:
+      summary: Paged audit log (ADMIN, REGULATOR)
+      parameters:
+        - { name: entity_type, in: query, schema: { type: string } }
+        - { name: entity_id, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AuditRow' } } } } } }
+  /audit/verify:
+    get:
+      summary: Recompute hash chain; returns first broken id or null
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: object, properties: { intact: { type: boolean }, first_broken_id: { type: integer, nullable: true }, rows_checked: { type: integer } } } } } } }
+
+  /export/fhir/study/{id}:
+    get:
+      summary: FHIR R4 Bundle (ResearchStudy, ResearchSubject, Patient, AdverseEvent)
+      parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+      responses: { '200': { description: application/fhir+json Bundle } }
+  /import/fhir:
+    post: { summary: FHIR import stub for HIS integration demo, responses: { '202': { description: Accepted } } }
+  /export/sdtm/study/{id}/{domain}:
+    get:
+      summary: SDTM CSV for domain DM or AE
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+        - { name: domain, in: path, required: true, schema: { type: string, enum: [DM, AE] } }
+      responses: { '200': { description: text/csv } }
+
+  /admin/users:
+    get: { summary: List users (ADMIN), responses: { '200': { description: OK } } }
+    post: { summary: Create user (ADMIN), responses: { '201': { description: Created } } }
+  /admin/users/{uid}:
+    patch: { summary: Change role/activation (ADMIN), parameters: [{ name: uid, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /admin/sites:
+    get: { summary: List sites, responses: { '200': { description: OK } } }
+    post: { summary: Create site, responses: { '201': { description: Created } } }
+  /admin/rules:
+    get: { summary: List regulatory rules, responses: { '200': { description: OK } } }
+    put: { summary: Update rule durations with source citation, responses: { '200': { description: OK } } }
+  /admin/kpi-config:
+    get: { summary: Get KPI thresholds, responses: { '200': { description: OK } } }
+    put: { summary: Update KPI thresholds, responses: { '200': { description: OK } } }
