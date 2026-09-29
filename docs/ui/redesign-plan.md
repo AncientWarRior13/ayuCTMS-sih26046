@@ -1,43 +1,48 @@
 # AyuCTMS UI/UX Redesign Plan & Architecture
 
-## 1. Information Architecture & Navigation
+## 1. Information Architecture & Entry Flow
 
-The AyuCTMS application serves 7 roles (PI, COORDINATOR, MONITOR, IEC, PV, ADMIN, REGULATOR). The shell features:
-- **Left Rail**: Collapsible navigation with stylized Botanical Chain logo mark, role indicator, live alert status, and permanent synthetic data disclaimer.
-- **Top Bar**: Breadcrumbs, Quick Action / Command Palette trigger (`Ctrl+K`), live alert bell with counter, theme toggle (Ink Dark / Parchment Light), density toggle, and user menu.
-- **Role Identity Ribbon**: Persistent role bar showing active scope (and read-only badge for REGULATOR).
+AyuCTMS serves 7 roles (PI, COORDINATOR, MONITOR, IEC, PV, ADMIN, REGULATOR). The updated architecture cleanly separates public marketing from the authenticated workspace.
 
-### Route Inventory & Functional Matrix
-- `/login`: Cinematic entrance with particle mandala, instant fallback, quick 1-click role logins with preview.
-- `/`: Role-specific Home Dashboard (KPI tiles with delta, SAE clock urgent card, enrolment breakdown, approval timeline, audit snapshot).
-- `/studies`: Studies list with segmented status filters, progress rings, protocol wizard modal.
-- `/studies/:id`: Study detail with `LifecycleVine`, KPIs, Milestones, Enrolment curve, and tabbed subviews:
-  - Overview
-  - Participants & Visits + `ParticipantDrawer`
-  - Deviations & Data Queries (sign-off, inline answers)
-  - Safety & AE list
-  - Consent & Amendments (comprehension quiz builder, multilingual Hindi/English preview)
-  - Standards Export (FHIR R4 Bundle, CDISC SDTM DM/AE)
-- `/safety`: Two-pane Safety Inbox (`ClockRing`, `HerbDrugCard`, Naranjo causality assessment calculator, SAE submission with clock trigger).
-- `/signals`: Disproportionality Signal Detection (PRR / ROR table, `SignalForest` dot-and-whisker plot, Prakriti Triad stratification).
-- `/risk`: Study × Site Risk Heatmap (color + text band, leading indicators, participant risk breakdown).
-- `/audit`: Hash-chain verification hero (`ChainViz`), Merkle checkpoints anchoring, tamper detection, and JSON diff inspector.
-- `/alerts`: System alerts with level badges, acknowledgment, real-time push.
-- `/compliance`: Standards matrix (CTRI, ICH-GCP, CDISC, FHIR, DPDP, ALCOA+), data provenance, regulatory citation review.
-- `/admin`: User & Site management, regulatory clock rules, audit thresholds.
-- `/account`: User profile, TOTP 2FA setup with QR and manual key.
-- `/__kit`: Development component kit showing all tokens, buttons, inputs, modals, clocks, and widgets in both themes.
+### Public Routes
+- `/`: **Awwards-grade Marketing Landing page** (always first page seen by visitors; no auth required).
+  - High-impact R3F/Three.js + GSAP WebGL hero scene, smooth scroll (Lenis), interactive hash-chain tamper demo, live SAE clock simulation, 7-role orbit, and CTRI / FHIR / CDISC standards strip.
+  - Nav CTA dynamically shows "Sign in" (logged out) or "Open workspace" (logged in).
+- `/login`: **Cinematic Login Scene**.
+  - Crisp auth card, password reveal, TOTP step-up field, and 1-click quick-login cards for all 7 demo accounts.
+  - Respects `?next=/app/...` parameter. Redirects already-logged-in users directly to their role home.
+- `/landing`: Permanent redirect to `/` (keeps legacy links intact).
+
+### Workspace Routes (`/app/*`)
+Mounted under `<RequireAuth>` + `<Layout>` ("Instrument register" — calm, high-density, keyboard-first):
+- `/app`: Index route redirects to `ROLE_HOME[role]` (`/app/pi`, `/app/coordinator`, `/app/monitor`, `/app/iec`, `/app/pv`, `/app/admin`, `/app/regulator`).
+- `/app/studies`: Studies portfolio list with segmented lifecycle filters, enrolment progress, and new study wizard.
+- `/app/studies/:id`: Full protocol console with `LifecycleVine`, Milestones, and URL-synced tabs (`?tab=overview|participants|deviations|queries|safety|consent|exports`).
+- `/app/safety`: Two-pane pharmacovigilance workspace with `ClockRing`, `HerbDrugCard`, Naranjo causality wizard, and regulatory report triggers (`?ae=id`).
+- `/app/signals`: Disproportionality signal detection with PRR/ROR analysis, `SignalForest` forest-plot, and Prakriti triad stratification.
+- `/app/risk`: Study $\times$ Site `RiskHeatmap` and participant leading indicators.
+- `/app/audit`: Cryptographic hash chain verification (`ChainViz`), Merkle checkpoint anchoring, and structured diffs.
+- `/app/compliance`: Regulatory standards alignment matrix and data provenance inspector.
+- `/app/alerts`: Alert inbox with live WebSocket streaming and single-click acknowledgment.
+- `/app/settings`: Administration portal (Users, Sites, Rules, KPI thresholds).
+- `/app/account`: User profile, permission inspect, and TOTP 2FA configuration.
+- `/__kit`: Dev-only living design system styleguide.
+
+---
 
 ## 2. Reused vs Rebuilt
 
-- **Reused**:
+- **Strictly Preserved**:
   - API Client (`frontend/src/api/client.ts`)
-  - TanStack Query hooks & query keys
-  - Auth context and permissions checking logic (`frontend/src/auth/`)
-  - WebSocket connection handling
+  - TanStack Query hooks, caching policies & query keys
+  - Auth context and permission verification logic (`frontend/src/auth/`)
+  - WebSocket alert streaming
+  - Backend FastAPI contracts and database schemas
 - **Rebuilt**:
-  - Entire Design System (`tokens`, `index.css`, Tailwind v4 variables)
-  - App Shell (`Layout.tsx`)
-  - Design system primitives (`ui.tsx`)
-  - Specialized widgets (`widgets.tsx`: `ClockRing`, `LifecycleVine`, `ChainViz`, `RiskHeatmap`, `SignalForest`, `HerbDrugCard`)
-  - All 13 application screens and drawer modals with authentic botanical-ledger aesthetic.
+  - Entry routing flow (Landing at `/`, Login at `/login`, workspace under `/app/*`)
+  - Design system tokens (`tokens.css`, Tailwind v4 theme, AA contrast in both Ink Dark & Parchment Light)
+  - Self-hosted Fontsource typefaces (Display Serif, UI Sans, Tabular Mono, Noto Sans Devanagari)
+  - App Shell (`Layout.tsx`) with collapsible rail, Command Palette (`cmdk`), and live status bell
+  - Component primitives (`src/components/ui/*`)
+  - Signature domain components (`src/components/signature/*`: `ClockRing`, `LifecycleVine`, `ChainViz`, `RiskHeatmap`, `SignalForest`, `HerbDrugCard`, `ParticipantDrawer`)
+  - All workspace screens with role-specific views and zero write affordances for REGULATOR.
