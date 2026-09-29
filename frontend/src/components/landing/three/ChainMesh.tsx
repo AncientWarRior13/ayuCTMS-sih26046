@@ -17,7 +17,7 @@ const COLOR_TEAL = new THREE.Color("#2FB39A");
 const COLOR_DANGER = new THREE.Color("#E5484D");
 
 export function ChainMesh() {
-  const { progress, tamperState, onTamper } = useSceneProgress();
+  const { progressDampedRef, tamperState, onTamper } = useSceneProgress();
 
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const edgesRef = useRef<THREE.InstancedMesh>(null);
@@ -26,9 +26,6 @@ export function ChainMesh() {
   const hexGeometry = useMemo(() => createHexPrismGeometry(), []);
 
   const [shockwavePos, setShockwavePos] = useState<THREE.Vector3 | null>(null);
-
-  // Smooth damped progress
-  const dampedProgressRef = useRef(progress);
 
   // Temporary math objects to avoid garbage collection
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -47,26 +44,20 @@ export function ChainMesh() {
     }
   }, []);
 
-  useFrame((state, delta) => {
-    // 1. Progress damping (lerp 0.08 per frame)
-    dampedProgressRef.current = THREE.MathUtils.lerp(
-      dampedProgressRef.current,
-      progress,
-      Math.min(1, delta * 12.0)
-    );
-    const p = dampedProgressRef.current;
-    const time = state.clock.getElapsedTime();
-
+  useFrame((state) => {
     if (!meshRef.current || !edgesRef.current) return;
+
+    // Read the single shared damped progress from ref
+    const p = progressDampedRef.current;
+    const time = state.clock.getElapsedTime();
 
     const now = performance.now();
     const { tamperedIndex, tamperTime, restoreTime } = tamperState;
 
     for (let i = 0; i < BLOCK_COUNT; i++) {
-      // 2. Position and Quaternion blending across keyframes
+      // 1. Position and Quaternion blending across keyframes
       if (p <= 0.12) {
         // Phase 1: Lotus Idle (0.00 - 0.12)
-        // Gentle breathing animation
         const floatOffset = Math.sin(time * 1.5 + i * 0.15) * 0.04;
         currentPos.copy(layouts.lotusPos[i]);
         currentPos.y += floatOffset;
@@ -74,7 +65,6 @@ export function ChainMesh() {
       } else if (p <= 0.28) {
         // Phase 2: Lotus → Chain (0.12 - 0.28, staggered by block index)
         const phaseP = (p - 0.12) / (0.28 - 0.12);
-        // Stagger index: earlier blocks move first
         const staggerStart = (i / BLOCK_COUNT) * 0.4;
         const rawT = THREE.MathUtils.clamp((phaseP - staggerStart) / 0.6, 0, 1);
         const t = THREE.MathUtils.smoothstep(rawT, 0, 1);
@@ -109,7 +99,7 @@ export function ChainMesh() {
       meshRef.current.setMatrixAt(i, dummy.matrix);
       edgesRef.current.setMatrixAt(i, dummy.matrix);
 
-      // 3. Color resolution (Ink, Red for tampered, Teal for verified/restored)
+      // 2. Color resolution
       let blockColor = COLOR_INK;
 
       if (p >= 0.85) {
@@ -134,10 +124,8 @@ export function ChainMesh() {
         if (elapsedSinceRestore > delayMs) {
           const restoreProgress = THREE.MathUtils.clamp((elapsedSinceRestore - delayMs) / 200, 0, 1);
           if (restoreProgress < 0.7) {
-            // Flash teal
             blockColor = COLOR_TEAL;
           } else {
-            // Settle back to pristine ink
             const settleProgress = (restoreProgress - 0.7) / 0.3;
             tempColor.lerpColors(COLOR_TEAL, COLOR_INK, settleProgress);
             blockColor = tempColor;
@@ -157,14 +145,13 @@ export function ChainMesh() {
     }
   });
 
-  // Click handler (raycasting) enabled in hero phase (progress < 0.15)
+  // Click handler (raycasting) enabled in hero phase
   const handleClick = (e: any) => {
-    if (progress > 0.15) return;
+    if (progressDampedRef.current > 0.15) return;
     e.stopPropagation();
     const instanceId = e.instanceId;
     if (typeof instanceId === "number") {
       onTamper(instanceId);
-      // Position of clicked block
       const mat = new THREE.Matrix4();
       meshRef.current?.getMatrixAt(instanceId, mat);
       const pos = new THREE.Vector3();
@@ -175,27 +162,30 @@ export function ChainMesh() {
 
   return (
     <group>
-      {/* 60 Hexagonal Prism Blocks */}
+      {/* 60 Hexagonal Prism Blocks with frustumCulled={false} and enhanced corridor visibility */}
       <instancedMesh
         ref={meshRef}
         args={[hexGeometry, undefined, BLOCK_COUNT]}
         onClick={handleClick}
+        frustumCulled={false}
       >
         <meshStandardMaterial
-          roughness={0.25}
-          metalness={0.8}
+          roughness={0.4}
+          metalness={0.3}
           color="#101815"
-          emissive="#000000"
+          emissive="#2FB39A"
+          emissiveIntensity={0.15}
         />
       </instancedMesh>
 
-      {/* Brass Edge Highlights */}
+      {/* Brass Edge Highlights with frustumCulled={false} */}
       <instancedMesh
         ref={edgesRef}
         args={[hexGeometry, undefined, BLOCK_COUNT]}
         raycast={() => null}
+        frustumCulled={false}
       >
-        <meshBasicMaterial color="#C8A45C" wireframe transparent opacity={0.65} />
+        <meshBasicMaterial color="#C8A45C" wireframe transparent opacity={0.75} />
       </instancedMesh>
 
       {/* Tamper Shockwave Ring */}

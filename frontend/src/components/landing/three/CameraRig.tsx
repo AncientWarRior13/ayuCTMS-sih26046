@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { useSceneProgress } from "./SceneContext";
 
 export function CameraRig() {
-  const { progress } = useSceneProgress();
+  const { progressDampedRef } = useSceneProgress();
   const { camera } = useThree();
 
   const mousePos = useRef({ x: 0, y: 0 });
@@ -14,7 +14,6 @@ export function CameraRig() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Normalize to [-1, 1]
       mousePos.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mousePos.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
@@ -24,12 +23,12 @@ export function CameraRig() {
   }, []);
 
   useFrame((_, delta) => {
-    const p = progress;
-    const lerpFactor = Math.min(1, delta * 4.5);
+    // Read the single shared damped progress from ref
+    const p = progressDampedRef.current;
+    const lerpFactor = Math.min(1, delta * 6.0);
 
     if (p <= 0.28) {
       // Hero Framing + Parallax
-      // Parallax max 0.4 units while p < 0.12, fading out as p -> 0.28
       const parallaxFade = Math.max(0, 1 - p / 0.16);
       const px = mousePos.current.x * 0.4 * parallaxFade;
       const py = mousePos.current.y * 0.25 * parallaxFade;
@@ -52,7 +51,6 @@ export function CameraRig() {
     } else if (p <= 0.85) {
       // Flying down Corridor
       const corridorT = (p - 0.4) / (0.85 - 0.4);
-      // z moves from +2.8 down to -45.0
       const camZ = THREE.MathUtils.lerp(2.8, -44.0, corridorT);
       const camX = Math.sin(corridorT * Math.PI * 4) * 0.25;
       const camY = Math.cos(corridorT * Math.PI * 4) * 0.2;
@@ -69,7 +67,7 @@ export function CameraRig() {
       );
       targetLookAt.current.lerpVectors(
         new THREE.Vector3(0, 0, -51.0),
-        new THREE.Vector3(0, 0, 0), // Centered for final CTA
+        new THREE.Vector3(0, 0, 0),
         t
       );
     }

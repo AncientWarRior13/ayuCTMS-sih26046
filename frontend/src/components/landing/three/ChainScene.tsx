@@ -1,7 +1,8 @@
 import { PerformanceMonitor } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
+import * as THREE from "three";
 import { CameraRig } from "./CameraRig";
 import { ChainMesh } from "./ChainMesh";
 import { useSceneProgress } from "./SceneContext";
@@ -30,8 +31,27 @@ class WebGLErrorBoundary extends Component<
   }
 }
 
+// Single central frame updater for shared damped progress
+function ProgressUpdater() {
+  const { progressTargetRef, progressDampedRef, overrideProgress } = useSceneProgress();
+
+  useFrame((_, delta) => {
+    if (overrideProgress !== null) {
+      progressDampedRef.current = overrideProgress;
+    } else {
+      progressDampedRef.current = THREE.MathUtils.lerp(
+        progressDampedRef.current,
+        progressTargetRef.current,
+        Math.min(1, delta * 5.0)
+      );
+    }
+  });
+
+  return null;
+}
+
 export function ChainScene() {
-  const { progress, isMobileOrReduced } = useSceneProgress();
+  const { progressDampedRef, isMobileOrReduced } = useSceneProgress();
 
   const [dpr, setDpr] = useState<number>(1.25);
   const [enableEffects, setEnableEffects] = useState<boolean>(true);
@@ -46,7 +66,6 @@ export function ChainScene() {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  // Performance degradation callback
   const handlePerformanceDrop = () => {
     setDpr(1.0);
     setEnableEffects(false);
@@ -61,8 +80,7 @@ export function ChainScene() {
     );
   }
 
-  // Pointer events: active in hero so lotus is clickable, none when scrolling further
-  const isInteractive = progress < 0.15;
+  const isInteractive = progressDampedRef.current < 0.15;
 
   return (
     <div
@@ -82,10 +100,14 @@ export function ChainScene() {
           }}
         >
           <fogExp2 attach="fog" args={["#0A0F0D", 0.038]} />
+
           {/* Performance Monitor */}
           <PerformanceMonitor onDecline={handlePerformanceDrop} />
 
-          {/* Lighting (No environment maps, pure warm key + teal rim) */}
+          {/* Central Progress Updater */}
+          <ProgressUpdater />
+
+          {/* Lighting */}
           <color attach="background" args={["#0A0F0D"]} />
           <ambientLight intensity={0.4} color="#E8EFE9" />
           <directionalLight position={[5, 8, 5]} intensity={1.5} color="#FFF5E0" />
@@ -98,7 +120,7 @@ export function ChainScene() {
           {/* 60 Hexagonal Prism Blocks */}
           <ChainMesh />
 
-          {/* Postprocessing (Bloom max 0.5, subtle Vignette) */}
+          {/* Postprocessing */}
           {enableEffects && (
             <EffectComposer multisampling={0}>
               <Bloom

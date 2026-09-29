@@ -28,19 +28,22 @@ const UNFOLD_STATEMENTS = [
     step: "01",
     tag: "TAMPER-EVIDENT RECORDING",
     problem: "Traditional trial spreadsheets allow retroactive edits and missing date stamps.",
-    solution: "AyuCTMS calculates cryptographic SHA-256 block hashes on every CRF mutation. Any retroactive alteration breaks the forward chain immediately.",
+    solution:
+      "AyuCTMS calculates cryptographic SHA-256 block hashes on every CRF mutation. Any retroactive alteration breaks the forward chain immediately.",
   },
   {
     step: "02",
     tag: "STRICT AYUSH ONTOLOGIES",
     problem: "Generic western EDC systems lack native Prakriti, Vikriti, Agni, and Ayush Morbidity vocabularies.",
-    solution: "Built-in CDISC CT codelists + 30 Ayush morbidity terms mapped directly to CDISC SDTM and WHO-ART standards.",
+    solution:
+      "Built-in CDISC CT codelists + 30 Ayush morbidity terms mapped directly to CDISC SDTM and WHO-ART standards.",
   },
   {
     step: "03",
     tag: "REGULATORY SAE TIMERS",
     problem: "Adverse events reported after the 24-hour statutory deadline risk clinical suspension.",
-    solution: "Hardware-precise 1Hz PV countdown clocks notify CDSCO, Sponsor, and IEC with automated audit trail generation.",
+    solution:
+      "Hardware-precise 1Hz PV countdown clocks notify CDSCO, Sponsor, and IEC with automated audit trail generation.",
   },
 ];
 
@@ -61,13 +64,13 @@ function StationReadout({ station }: { station: (typeof STATIONS)[number] }) {
   }, [station.readoutType]);
 
   return (
-    <div className="mt-4 p-4 rounded-xl bg-[#101815] border border-[#22302A] font-mono text-xs shadow-lg">
-      <div className="flex items-center justify-between text-[#8FA398] text-[11px] mb-1.5">
+    <div className="mt-4 p-4 rounded-xl bg-[#101815] border border-[#22302A] font-mono text-[13px] shadow-lg">
+      <div className="flex items-center justify-between text-[#8FA398] mb-1.5">
         <span className="flex items-center gap-1.5 font-semibold tracking-wider text-[#C8A45C]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#C8A45C]" />
+          <span className="w-2 h-2 rounded-full bg-[#C8A45C]" />
           {station.readoutData.label}
         </span>
-        <span className="text-[10px] px-2 py-0.5 rounded bg-[#16201C] border border-[#22302A] text-[#2FB39A]">
+        <span className="text-[13px] px-2.5 py-0.5 rounded bg-[#16201C] border border-[#22302A] text-[#2FB39A]">
           LIVE
         </span>
       </div>
@@ -83,25 +86,36 @@ function StationReadout({ station }: { station: (typeof STATIONS)[number] }) {
         )}
       </div>
 
-      <div className="text-[11px] text-[#56685F] mt-1">{station.readoutData.subtext}</div>
+      <div className="text-[13px] text-[#A8C0B2] mt-1">{station.readoutData.subtext}</div>
     </div>
   );
 }
 
+// Section transition helper: hide-out 150ms, show-in 200ms with 200ms delay
+const getSectionStyle = (isActive: boolean): React.CSSProperties => ({
+  transition: isActive
+    ? "opacity 200ms cubic-bezier(0.16, 1, 0.3, 1) 200ms, transform 200ms cubic-bezier(0.16, 1, 0.3, 1) 200ms"
+    : "opacity 150ms cubic-bezier(0.7, 0, 0.84, 0) 0ms, transform 150ms cubic-bezier(0.7, 0, 0.84, 0) 0ms",
+  opacity: isActive ? 1 : 0,
+  transform: isActive ? "translateY(0px)" : "translateY(-10px)",
+  pointerEvents: isActive ? "auto" : "none",
+});
+
 // Inner Landing Content that consumes useSceneProgress
 function LandingContent() {
   const {
-    progress,
-    setProgress,
+    setScrollTarget,
+    activeSection,
+    activeStationIndex,
     tamperState,
     onRestore,
-    activeStationIndex,
     isMobileOrReduced,
   } = useSceneProgress();
 
   const journeyRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Lenis smooth scroll and update progress
+  // Initialize Lenis smooth scroll and update target progress ref
+  // Removed duplicate window scroll listener per specification
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -109,7 +123,7 @@ function LandingContent() {
       orientation: "vertical",
     });
 
-    const handleScroll = () => {
+    const handleLenisScroll = () => {
       if (!journeyRef.current) return;
       const rect = journeyRef.current.getBoundingClientRect();
       const journeyHeight = rect.height - window.innerHeight;
@@ -117,10 +131,10 @@ function LandingContent() {
 
       const scrolled = -rect.top;
       const rawP = Math.max(0, Math.min(1, scrolled / journeyHeight));
-      setProgress(rawP);
+      setScrollTarget(rawP);
     };
 
-    lenis.on("scroll", handleScroll);
+    lenis.on("scroll", handleLenisScroll);
 
     function raf(time: number) {
       lenis.raf(time);
@@ -128,13 +142,11 @@ function LandingContent() {
     }
     const rafId = requestAnimationFrame(raf);
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       lenis.destroy();
       cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", handleScroll);
     };
-  }, [setProgress]);
+  }, [setScrollTarget]);
 
   return (
     <div className="relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
@@ -160,7 +172,7 @@ function LandingContent() {
               <span className="font-serif text-lg font-bold tracking-tight text-[#E8EFE9]">
                 AyuCTMS
               </span>
-              <span className="ml-2 text-[10px] uppercase tracking-wider text-[#8FA398]">
+              <span className="ml-2 text-[13px] uppercase tracking-wider text-[#8FA398]">
                 SIH26046 · Ministry of Ayush
               </span>
             </div>
@@ -169,7 +181,7 @@ function LandingContent() {
           <div className="flex items-center gap-4">
             <Link
               to="/lab"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-[#C8A45C] bg-[#16201C] hover:bg-[#1D2A24] border border-[#C8A45C]/30 rounded-lg transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-mono text-[#C8A45C] bg-[#16201C] hover:bg-[#1D2A24] border border-[#C8A45C]/30 rounded-lg transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               3D Lab Rig
@@ -177,7 +189,7 @@ function LandingContent() {
 
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#2FB39A] px-4 py-2 text-xs font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#2FB39A] px-4 py-2 text-[13px] font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-colors"
             >
               Sign In
               <ArrowRight className="h-3.5 w-3.5" />
@@ -187,12 +199,12 @@ function LandingContent() {
       </header>
 
       {/* ============================================================ */}
-      {/* PINNED SCROLL JOURNEY CONTAINER (550vh)                        */}
-      {/* Drives progress 0.0 -> 1.0                                   */}
+      {/* PINNED SCROLL JOURNEY CONTAINER (750vh)                        */}
+      {/* Drives progress 0.0 -> 1.0 with equal station distances       */}
       {/* ============================================================ */}
       <div
         ref={journeyRef}
-        className={isMobileOrReduced ? "relative z-10" : "relative z-10 h-[550vh]"}
+        className={isMobileOrReduced ? "relative z-10" : "relative z-10 h-[750vh]"}
       >
         <div
           className={
@@ -205,17 +217,14 @@ function LandingContent() {
           {/* HERO SECTION (Progress 0.00 - 0.12)                         */}
           {/* ========================================================== */}
           <section
-            className={`absolute inset-0 flex items-center transition-opacity duration-500 ${
-              isMobileOrReduced || progress <= 0.14
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            }`}
+            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "hero")}
+            className="absolute inset-0 flex items-center"
           >
             <div className="mx-auto w-full max-w-7xl px-6 pt-16">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 {/* Left Column (Hero Content) */}
                 <div className="lg:col-span-6 space-y-6">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3.5 py-1 text-xs text-[#C8A45C]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3.5 py-1 text-[13px] text-[#C8A45C]">
                     <span className="w-2 h-2 rounded-full bg-[#2FB39A]" />
                     Tamper-Evident Ayurveda Clinical Trials
                   </div>
@@ -233,7 +242,7 @@ function LandingContent() {
                   <div className="flex flex-wrap items-center gap-4 pt-2">
                     <Link
                       to="/login"
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#2FB39A] px-6 py-3 text-sm font-semibold text-[#0A0F0D] hover:bg-[#269984] shadow-lg shadow-[#2FB39A]/20 transition-all hover:scale-[1.02]"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#2FB39A] px-6 py-3 text-sm font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-all hover:scale-[1.02]"
                     >
                       Enter Workspace
                       <ArrowRight className="h-4 w-4" />
@@ -249,46 +258,42 @@ function LandingContent() {
                   {/* Interactive Tamper Status Chip */}
                   <div className="pt-4">
                     {tamperState.tamperedIndex !== null ? (
-                      <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#E5484D]/15 border border-[#E5484D]/40 text-[#E5484D] text-xs font-mono shadow-xl animate-pulse">
+                      <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#E5484D]/15 border border-[#E5484D]/40 text-[#E5484D] text-[13px] font-mono shadow-xl animate-pulse">
                         <ShieldAlert className="w-4 h-4 text-[#E5484D]" />
                         <span>CHAIN BROKEN AT BLOCK #{tamperState.tamperedIndex}</span>
                         <button
                           onClick={onRestore}
-                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#2FB39A] hover:bg-[#269984] text-[#0A0F0D] font-bold text-xs transition-colors"
+                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#2FB39A] hover:bg-[#269984] text-[#0A0F0D] font-bold text-[13px] transition-colors"
                         >
-                          <RefreshCw className="w-3 h-3" />
+                          <RefreshCw className="w-3.5 h-3.5" />
                           Restore Chain
                         </button>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-2 text-xs text-[#56685F] font-mono">
-                        <Fingerprint className="w-3.5 h-3.5 text-[#C8A45C]" />
+                      <div className="inline-flex items-center gap-2 text-[13px] text-[#A8C0B2] font-mono">
+                        <Fingerprint className="w-4 h-4 text-[#C8A45C]" />
                         <span>Interactive 3D: Click any petal block in the lotus to test tamper detection</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Right Column: Empty to leave space for 3D Lotus */}
+                {/* Right Column: Open space for 3D Lotus */}
                 <div className="hidden lg:block lg:col-span-6 pointer-events-none" />
               </div>
             </div>
           </section>
 
           {/* ========================================================== */}
-          {/* UNFOLD SECTION (Progress 0.14 - 0.38)                       */}
-          {/* Text in left 45%, 3D chain line visible on right           */}
+          {/* UNFOLD SECTION (Progress 0.12 - 0.40)                       */}
           {/* ========================================================== */}
           <section
-            className={`absolute inset-0 flex items-center transition-opacity duration-500 ${
-              !isMobileOrReduced && progress > 0.14 && progress <= 0.38
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            }`}
+            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "unfold")}
+            className="absolute inset-0 flex items-center"
           >
             <div className="mx-auto w-full max-w-7xl px-6">
               <div className="w-full lg:w-[45%] space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3 py-1 text-xs text-[#C8A45C]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3.5 py-1 text-[13px] text-[#C8A45C]">
                   <span>The Architectural Transformation</span>
                 </div>
 
@@ -302,14 +307,14 @@ function LandingContent() {
                       key={item.step}
                       className="p-4 rounded-xl bg-[#101815]/90 border border-[#22302A] backdrop-blur-md"
                     >
-                      <div className="flex items-center justify-between text-xs font-mono text-[#C8A45C] mb-1">
+                      <div className="flex items-center justify-between text-[13px] font-mono text-[#C8A45C] mb-1">
                         <span>{item.tag}</span>
                         <span>{item.step}</span>
                       </div>
-                      <div className="text-xs text-[#8FA398] line-through mb-1.5 opacity-80">
+                      <div className="text-[13px] text-[#8FA398] line-through mb-1.5 opacity-80">
                         {item.problem}
                       </div>
-                      <div className="text-xs text-[#E8EFE9] leading-relaxed">
+                      <div className="text-[14px] text-[#E8EFE9] leading-relaxed">
                         {item.solution}
                       </div>
                     </div>
@@ -320,21 +325,18 @@ function LandingContent() {
           </section>
 
           {/* ========================================================== */}
-          {/* HOW IT WORKS SECTION (Progress 0.38 - 0.85)                 */}
-          {/* Left rail with 5 stations + live readouts                  */}
+          {/* HOW IT WORKS SECTION (Progress 0.40 - 0.85)                 */}
+          {/* Left rail with 5 stations; equal scroll distance for each  */}
           {/* ========================================================== */}
           <section
-            className={`absolute inset-0 flex items-center transition-opacity duration-500 ${
-              !isMobileOrReduced && progress > 0.38 && progress <= 0.85
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            }`}
+            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "stations")}
+            className="absolute inset-0 flex items-center"
           >
             <div className="mx-auto w-full max-w-7xl px-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                {/* Left Rail: 5 Stations */}
+                {/* Left Rail: 5 Stations with AA contrast for inactive rows */}
                 <div className="lg:col-span-5 space-y-3">
-                  <div className="text-xs font-mono text-[#C8A45C] uppercase tracking-wider mb-2">
+                  <div className="text-[13px] font-mono text-[#C8A45C] uppercase tracking-wider mb-2">
                     Station {activeStationIndex + 1} of 5 · Clinical Data Pipeline
                   </div>
 
@@ -346,22 +348,22 @@ function LandingContent() {
                         className={`p-4 rounded-xl transition-all duration-300 border ${
                           isActive
                             ? "bg-[#101815] border-[#2FB39A] shadow-lg shadow-[#2FB39A]/10 scale-[1.02]"
-                            : "bg-[#101815]/40 border-[#22302A] opacity-50"
+                            : "bg-[#131E18] border-[#2B3F34]"
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <h3
                             className={`text-sm font-semibold ${
-                              isActive ? "text-[#E8EFE9]" : "text-[#8FA398]"
+                              isActive ? "text-[#FFFFFF]" : "text-[#CDE0D5]"
                             }`}
                           >
                             {station.title}
                           </h3>
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                            className={`text-[13px] px-2.5 py-0.5 rounded font-mono ${
                               isActive
-                                ? "bg-[#2FB39A]/15 text-[#39C8AD] border border-[#2FB39A]/30"
-                                : "bg-[#16201C] text-[#56685F]"
+                                ? "bg-[#2FB39A]/15 text-[#39C8AD] border border-[#2FB39A]/40"
+                                : "bg-[#1B2922] text-[#A8C0B2] border border-[#334D3F]"
                             }`}
                           >
                             {station.badge}
@@ -370,7 +372,7 @@ function LandingContent() {
 
                         {isActive && (
                           <div className="mt-2 space-y-3">
-                            <p className="text-xs text-[#8FA398] leading-relaxed">
+                            <p className="text-[13px] text-[#CBDAD0] leading-relaxed">
                               {station.description}
                             </p>
                             <StationReadout station={station} />
@@ -389,17 +391,14 @@ function LandingContent() {
 
           {/* ========================================================== */}
           {/* FINAL CTA SECTION (Progress 0.85 - 1.00)                    */}
-          {/* Centered headline, verified lotus glowing behind it         */}
+          {/* Flat surfaces, clean typography without stray apostrophe    */}
           {/* ========================================================== */}
           <section
-            className={`absolute inset-0 flex items-center justify-center text-center transition-opacity duration-500 ${
-              !isMobileOrReduced && progress > 0.85
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            }`}
+            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "final")}
+            className="absolute inset-0 flex items-center justify-center text-center"
           >
             <div className="max-w-2xl px-6 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#2FB39A]/50 bg-[#101815] px-4 py-1.5 text-xs text-[#39C8AD] shadow-lg shadow-[#2FB39A]/15">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#2FB39A]/50 bg-[#101815] px-4 py-1.5 text-[13px] text-[#39C8AD]">
                 <CheckCircle2 className="w-4 h-4 text-[#2FB39A]" />
                 All 60 Cryptographic Blocks Verified · Hash Chain Intact
               </div>
@@ -416,7 +415,7 @@ function LandingContent() {
               <div className="pt-2">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2FB39A] px-8 py-3.5 text-sm font-semibold text-[#0A0F0D] hover:bg-[#269984] shadow-xl shadow-[#2FB39A]/30 transition-all hover:scale-105"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#2FB39A] px-8 py-3.5 text-[15px] font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-all hover:scale-105"
                 >
                   Enter Clinical Workspace
                   <ArrowRight className="h-4 w-4" />
@@ -429,7 +428,6 @@ function LandingContent() {
 
       {/* ============================================================ */}
       {/* SOLID SECTIONS: Bento, Roles, Regulatory, Footer             */}
-      {/* Sits after the pinned journey on solid bg covering canvas     */}
       {/* ============================================================ */}
       <div id="spec" className="relative z-10 bg-[#0A0F0D] border-t border-[#22302A]">
         {/* Bento Grid */}
@@ -438,7 +436,7 @@ function LandingContent() {
             <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9]">
               Built for regulatory scrutiny from day zero
             </h2>
-            <p className="text-sm text-[#8FA398]">
+            <p className="text-[14px] text-[#8FA398]">
               Compliant with the National Pharmacovigilance Programme for ASU Drugs and Schedule Y
             </p>
           </div>
@@ -449,7 +447,7 @@ function LandingContent() {
                 <Clock className="w-5 h-5" />
               </div>
               <h3 className="font-serif text-lg text-[#E8EFE9]">Schedule Y PV Clocks</h3>
-              <p className="text-xs text-[#8FA398] leading-relaxed">
+              <p className="text-[13px] text-[#8FA398] leading-relaxed">
                 Automated 24-hour statutory timers for serious adverse reactions (ADR/SAE).
                 Deterministic escalations notify the licensing authority and ethics committee.
               </p>
@@ -460,7 +458,7 @@ function LandingContent() {
                 <FileCheck className="w-5 h-5" />
               </div>
               <h3 className="font-serif text-lg text-[#E8EFE9]">CDISC SDTM & FHIR R4</h3>
-              <p className="text-xs text-[#8FA398] leading-relaxed">
+              <p className="text-[13px] text-[#8FA398] leading-relaxed">
                 Export submission-ready SDTM DM and AE domains alongside de-identified FHIR R4
                 ResearchStudy bundles for international peer review.
               </p>
@@ -471,7 +469,7 @@ function LandingContent() {
                 <Lock className="w-5 h-5" />
               </div>
               <h3 className="font-serif text-lg text-[#E8EFE9]">Row-Level Security (RLS)</h3>
-              <p className="text-xs text-[#8FA398] leading-relaxed">
+              <p className="text-[13px] text-[#8FA398] leading-relaxed">
                 PostgreSQL multi-tenant database policies enforce strict site isolation.
                 Coordinators at Site 1 cannot view or modify participant data from Site 2.
               </p>
@@ -482,7 +480,7 @@ function LandingContent() {
                 <Shield className="w-5 h-5" />
               </div>
               <h3 className="font-serif text-lg text-[#E8EFE9]">DPDP Act 2023 Consent</h3>
-              <p className="text-xs text-[#8FA398] leading-relaxed">
+              <p className="text-[13px] text-[#8FA398] leading-relaxed">
                 Direct participant identifiers encrypted with Fernet AES-128. Consent withdrawal
                 immediately freezes future CRF data collection while retaining past audits.
               </p>
@@ -493,7 +491,7 @@ function LandingContent() {
                 <Activity className="w-5 h-5" />
               </div>
               <h3 className="font-serif text-lg text-[#E8EFE9]">Classical Prakriti CRFs</h3>
-              <p className="text-xs text-[#8FA398] leading-relaxed">
+              <p className="text-[13px] text-[#8FA398] leading-relaxed">
                 Standardized forms capturing Vata, Pitta, Kapha, Agni, and Kostha phenotypes alongside
                 conventional biochemical and hematological laboratory panels.
               </p>
@@ -504,7 +502,7 @@ function LandingContent() {
                 <Eye className="w-5 h-5" />
               </div>
               <h3 className="font-serif text-lg text-[#E8EFE9]">Zero-Write Auditor Role</h3>
-              <p className="text-xs text-[#8FA398] leading-relaxed">
+              <p className="text-[13px] text-[#8FA398] leading-relaxed">
                 Specialized regulator persona with strict read-only access. Every inspection view is
                 itself immutably logged into the system audit trail.
               </p>
@@ -518,7 +516,7 @@ function LandingContent() {
             <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9]">
               Seven specialized stakeholder personas
             </h2>
-            <p className="text-sm text-[#8FA398]">
+            <p className="text-[14px] text-[#8FA398]">
               Tailored dashboards designed specifically for each role's compliance duties
             </p>
           </div>
@@ -537,9 +535,9 @@ function LandingContent() {
                 key={item.role}
                 className="p-3.5 rounded-xl bg-[#101815] border border-[#22302A] text-center space-y-1.5"
               >
-                <div className="text-xs font-mono font-bold text-[#2FB39A]">{item.role}</div>
-                <div className="text-xs font-medium text-[#E8EFE9]">{item.name}</div>
-                <div className="text-[10px] text-[#56685F]">{item.desc}</div>
+                <div className="text-[13px] font-mono font-bold text-[#2FB39A]">{item.role}</div>
+                <div className="text-[13px] font-medium text-[#E8EFE9]">{item.name}</div>
+                <div className="text-[13px] text-[#8FA398]">{item.desc}</div>
               </div>
             ))}
           </div>
@@ -551,12 +549,12 @@ function LandingContent() {
             <div className="flex items-center gap-3">
               <Database className="w-5 h-5 text-[#2FB39A]" />
               <span className="font-serif font-bold text-sm text-[#E8EFE9]">AyuCTMS</span>
-              <span className="text-xs text-[#56685F]">
+              <span className="text-[13px] text-[#8FA398]">
                 © 2026 Smart India Hackathon · Problem Statement 26046
               </span>
             </div>
 
-            <div className="flex items-center gap-6 text-xs text-[#8FA398]">
+            <div className="flex items-center gap-6 text-[13px] text-[#8FA398]">
               <Link to="/lab" className="hover:text-[#2FB39A] transition-colors">
                 3D Lab
               </Link>
@@ -570,7 +568,7 @@ function LandingContent() {
                 className="inline-flex items-center gap-1 hover:text-[#2FB39A] transition-colors"
               >
                 Ministry of Ayush
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
