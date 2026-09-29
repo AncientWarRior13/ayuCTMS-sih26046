@@ -186,7 +186,7 @@ function StudyTable() {
     <Card
       title="Protocol Cohorts"
       actions={
-        <Link to="/studies" className="text-xs font-semibold text-[var(--brand)] hover:underline">
+        <Link to="/app/studies" className="text-xs font-semibold text-[var(--brand)] hover:underline">
           View all studies →
         </Link>
       }
@@ -198,7 +198,7 @@ function StudyTable() {
         {data.map((s) => (
           <tr key={s.id} className="hover:bg-[var(--surface-2)]/60 transition-colors">
             <td className="td font-mono font-semibold">
-              <Link className="text-[var(--brand-text)] hover:underline" to={`/studies/${s.id}`}>
+              <Link className="text-[var(--brand-text)] hover:underline" to={`/app/studies/${s.id}`}>
                 {s.protocol_no}
               </Link>
             </td>
@@ -370,7 +370,7 @@ function StudyQueues({ kind }: { kind: "queries" | "deviations" }) {
               <td className="td font-mono font-semibold">
                 <Link
                   className="text-[var(--brand-text)] hover:underline"
-                  to={`/studies/${x.study.id}?tab=${kind}`}
+                  to={`/app/studies/${x.study.id}?tab=${kind}`}
                 >
                   {x.study.protocol_no}
                 </Link>
@@ -442,7 +442,7 @@ function EthicsOverview() {
               <td className="td font-mono font-semibold">
                 <Link
                   className="text-[var(--brand-text)] hover:underline"
-                  to={`/studies/${e.study.id}`}
+                  to={`/app/studies/${e.study.id}`}
                 >
                   {e.study.protocol_no}
                 </Link>

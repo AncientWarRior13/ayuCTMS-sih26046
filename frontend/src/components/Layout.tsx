@@ -123,7 +123,7 @@ function AlertBell() {
               Operational Alerts ({alerts.length})
             </span>
             <Link
-              to="/alerts"
+              to="/app/alerts"
               onClick={() => setOpen(false)}
               className="text-xs font-medium text-[var(--brand)] hover:underline"
             >
@@ -171,13 +171,13 @@ function AlertBell() {
 
 const NAV: { to: string; label: string; icon: typeof Gauge; perm?: string }[] = [
   { to: "home", label: "Dashboard", icon: Gauge },
-  { to: "/studies", label: "Studies", icon: ClipboardList, perm: "study.read" },
-  { to: "/safety", label: "Safety & Clocks", icon: ShieldAlert, perm: "ae.read" },
-  { to: "/signals", label: "Signal Detection", icon: Activity, perm: "pv.signals" },
-  { to: "/risk", label: "Risk Topography", icon: Grid3x3, perm: "dashboard.read" },
-  { to: "/audit", label: "Audit Ledger", icon: FileSearch, perm: "audit.read" },
-  { to: "/compliance", label: "Standards Matrix", icon: ShieldCheck },
-  { to: "/settings", label: "Administration", icon: Settings, perm: "rules.read" },
+  { to: "/app/studies", label: "Studies", icon: ClipboardList, perm: "study.read" },
+  { to: "/app/safety", label: "Safety & Clocks", icon: ShieldAlert, perm: "ae.read" },
+  { to: "/app/signals", label: "Signal Detection", icon: Activity, perm: "pv.signals" },
+  { to: "/app/risk", label: "Risk Topography", icon: Grid3x3, perm: "dashboard.read" },
+  { to: "/app/audit", label: "Audit Ledger", icon: FileSearch, perm: "audit.read" },
+  { to: "/app/compliance", label: "Standards Matrix", icon: ShieldCheck },
+  { to: "/app/settings", label: "Administration", icon: Settings, perm: "rules.read" },
 ];
 
 export default function Layout() {
@@ -350,7 +350,7 @@ export default function Layout() {
 
             {/* Account Pill */}
             <Link
-              to="/account"
+              to="/app/account"
               className="flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/60 px-3 py-1.5 hover:border-[var(--brand)]/40 transition-colors"
             >
               <div className="h-6 w-6 rounded-full bg-[var(--brand)]/20 text-[var(--brand-text)] flex items-center justify-center font-bold text-xs">
@@ -373,7 +373,7 @@ export default function Layout() {
               className="rounded-lg p-2 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] border border-transparent transition-colors"
               onClick={() => {
                 logout();
-                nav("/login");
+                nav("/");
               }}
             >
               <LogOut size={17} />

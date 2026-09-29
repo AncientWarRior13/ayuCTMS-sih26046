@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { ROLE_HOME, ROLE_LABEL, useAuth, type Role } from "../auth/AuthContext";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { ROLE_LABEL, useAuth, type Role } from "../auth/AuthContext";
 import { Button, ErrorBox, Field } from "../components/ui";
 import { ShieldCheck, Activity, KeyRound, Sparkles, CheckCircle2 } from "lucide-react";
+import { ROLE_HOMES, sanitizeNext } from "./paths";
 
 const DEMO: [Role, string, string][] = [
   ["PI", "pi@demo.test", "Principal Investigator"],
@@ -18,6 +19,9 @@ const DEMO_PASSWORD = "Demo@12345";
 export default function Login() {
   const { me, login } = useAuth();
   const nav = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [totp, setTotp] = useState("");
@@ -25,7 +29,10 @@ export default function Login() {
   const [err, setErr] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
-  if (me) return <Navigate to={ROLE_HOME[me.role]} replace />;
+  if (me) {
+    const target = sanitizeNext(nextParam, ROLE_HOMES[me.role] || "/app/pi");
+    return <Navigate to={target} replace />;
+  }
 
   async function submit(
     e?: FormEvent,
@@ -35,8 +42,10 @@ export default function Login() {
     setBusy(true);
     setErr(null);
     try {
-      await login(creds?.email ?? email, creds?.password ?? password, totp);
-      nav("/");
+      const fresh = await login(creds?.email ?? email, creds?.password ?? password, totp);
+      const role = fresh?.role || "PI";
+      const target = sanitizeNext(nextParam, ROLE_HOMES[role] || "/app/pi");
+      nav(target);
     } catch (ex) {
       if ((ex as Error).message.includes("TOTP")) setNeedTotp(true);
       setErr(ex);

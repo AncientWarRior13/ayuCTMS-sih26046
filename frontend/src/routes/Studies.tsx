@@ -55,7 +55,7 @@ function NewStudy({ open, onClose }: { open: boolean; onClose: () => void }) {
       qc.invalidateQueries({ queryKey: ["studies"] });
       toast(`Protocol study ${s.protocol_no} initialized in DRAFT`);
       onClose();
-      nav(`/studies/${s.id}`);
+      nav(`/app/studies/${s.id}`);
     },
   });
 
@@ -272,7 +272,7 @@ export default function StudiesPage() {
                   <td className="td font-mono font-bold whitespace-nowrap">
                     <Link
                       className="text-[var(--brand-text)] hover:underline flex items-center gap-1"
-                      to={`/studies/${s.id}`}
+                      to={`/app/studies/${s.id}`}
                     >
                       {s.protocol_no}
                     </Link>

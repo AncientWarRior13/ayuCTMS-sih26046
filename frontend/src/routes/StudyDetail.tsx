@@ -558,7 +558,7 @@ export default function StudyDetail() {
     <div className="space-y-6">
       <div className="border-b border-[var(--border)] pb-4">
         <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)] mb-1">
-          <Link to="/studies" className="text-[var(--brand-text)] hover:underline">
+          <Link to="/app/studies" className="text-[var(--brand-text)] hover:underline">
             Studies
           </Link>
           <span>/</span>

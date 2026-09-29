@@ -1,5 +1,7 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { ROLE_HOMES } from "./paths";
 
 interface Particle { x:number;y:number;vx:number;vy:number;r:number;alpha:number;color:string; }
 
@@ -167,6 +169,7 @@ function TimelineStep({number,title,desc,visible,delay}:{number:string;title:str
 }
 
 export default function Landing() {
+  const { me } = useAuth();
   const canvasRef=useRef<HTMLCanvasElement>(null);
   const [scrollY,setScrollY]=useState(0);
   const [timelineVisible,setTimelineVisible]=useState(false);
@@ -179,6 +182,7 @@ export default function Landing() {
   useEffect(()=>{ const obs=new IntersectionObserver(([e])=>{ if(e.isIntersecting){setStatsVisible(true);obs.disconnect();} },{threshold:0.3}); if(statsRef.current)obs.observe(statsRef.current); return ()=>obs.disconnect(); },[]);
   const parallax=scrollY*0.3;
   const heroOpacity=Math.max(0,1-scrollY/600);
+  const userHome = me ? (ROLE_HOMES[me.role] || "/app/pi") : "/login";
   const roles=[
     {role:"PI",desc:"Principal Investigator",color:"#2FB39A"},
     {role:"COORD",desc:"Clinical Coordinator",color:"#C8A45C"},
@@ -207,7 +211,9 @@ export default function Landing() {
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden md:block text-xs text-[var(--text-muted)] font-mono">Ministry of Ayush</span>
-          <Link to="/login" className="px-4 py-2 rounded-lg text-sm font-semibold text-[var(--brand)] border border-[var(--brand)]/40 hover:bg-[var(--brand)]/10 hover:border-[var(--brand)] transition-all duration-200">Sign In</Link>
+          <Link to={userHome} className="px-4 py-2 rounded-lg text-sm font-semibold text-[var(--brand)] border border-[var(--brand)]/40 hover:bg-[var(--brand)]/10 hover:border-[var(--brand)] transition-all duration-200">
+            {me ? "Open Workspace" : "Sign In"}
+          </Link>
         </div>
       </nav>
       <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-8 pt-20" style={{opacity:heroOpacity}}>
@@ -237,8 +243,8 @@ export default function Landing() {
             <p className="text-lg sm:text-xl text-[var(--text-muted)] mb-3 leading-relaxed font-light max-w-xl">AI-powered Clinical Trial Management for <span className="text-[var(--accent-brass)] font-medium">Ayurvedic medicine</span>. Where ancient wisdom meets cryptographic precision.</p>
             <p className="text-sm text-[var(--text-faint)] font-mono mb-8 max-w-lg leading-relaxed">SHA-256 hash-chained audit · 72h SAE countdowns · Herb-drug interaction engine · ALCOA+</p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/login" id="cta-explore-dashboard" className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200" style={{background:"linear-gradient(135deg,var(--brand),#1a9982)",boxShadow:"0 0 24px var(--brand-glow)"}}>
-                <span>Explore Dashboard</span>
+              <Link to={userHome} id="cta-explore-dashboard" className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200" style={{background:"linear-gradient(135deg,var(--brand),#1a9982)",boxShadow:"0 0 24px var(--brand-glow)"}}>
+                <span>{me ? "Open Workspace" : "Explore Dashboard"}</span>
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
               </Link>
               <a href="#features" id="cta-learn-features" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-[var(--text-muted)] border border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text)] transition-all duration-200">
@@ -345,8 +351,8 @@ export default function Landing() {
             The chain is intact.<br/><span style={{background:"linear-gradient(135deg,var(--brand),var(--accent-brass))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>Are you ready?</span>
           </h2>
           <p className="text-[var(--text-muted)] text-base mb-8 max-w-lg mx-auto leading-relaxed">One-click role exploration with synthetic data. No setup required. See how your role shapes the interface.</p>
-          <Link to="/login" id="cta-access-gateway" className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-base text-white transition-all duration-200" style={{background:"linear-gradient(135deg,var(--brand),#1a9982)",boxShadow:"0 0 32px var(--brand-glow)"}}>
-            <span>Access Gateway</span>
+          <Link to={userHome} id="cta-access-gateway" className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-base text-white transition-all duration-200" style={{background:"linear-gradient(135deg,var(--brand),#1a9982)",boxShadow:"0 0 32px var(--brand-glow)"}}>
+            <span>{me ? "Open Workspace" : "Access Gateway"}</span>
             <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </Link>
           <div className="mt-10 pt-6 border-t border-[var(--border)] text-[10px] font-mono text-[var(--text-faint)]">SYNTHETIC DATA ONLY — NOT REAL PATIENT INFORMATION</div>
