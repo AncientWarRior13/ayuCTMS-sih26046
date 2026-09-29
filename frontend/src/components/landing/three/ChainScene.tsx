@@ -1,0 +1,118 @@
+import { PerformanceMonitor } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
+import { CameraRig } from "./CameraRig";
+import { ChainMesh } from "./ChainMesh";
+import { useSceneProgress } from "./SceneContext";
+import { ScenePoster } from "./ScenePoster";
+
+// WebGL Error Boundary
+class WebGLErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.warn("WebGL Context Failed:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.fallback;
+    }
+    return this.props.children;
+  }
+}
+
+export function ChainScene() {
+  const { progress, isMobileOrReduced } = useSceneProgress();
+
+  const [dpr, setDpr] = useState<number>(1.25);
+  const [enableEffects, setEnableEffects] = useState<boolean>(true);
+  const [tabVisible, setTabVisible] = useState<boolean>(true);
+
+  // Pause rendering when tab is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setTabVisible(!document.hidden);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // Performance degradation callback
+  const handlePerformanceDrop = () => {
+    setDpr(1.0);
+    setEnableEffects(false);
+  };
+
+  // If mobile (<768px) or prefers-reduced-motion, render static SVG poster
+  if (isMobileOrReduced) {
+    return (
+      <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-40">
+        <ScenePoster className="w-full h-full" />
+      </div>
+    );
+  }
+
+  // Pointer events: active in hero so lotus is clickable, none when scrolling further
+  const isInteractive = progress < 0.15;
+
+  return (
+    <div
+      className="fixed inset-0 z-0 overflow-hidden"
+      style={{
+        pointerEvents: isInteractive ? "auto" : "none",
+      }}
+    >
+      <WebGLErrorBoundary fallback={<ScenePoster className="w-full h-full" />}>
+        <Canvas
+          dpr={dpr}
+          camera={{ position: [0, 1.2, 5.5], fov: 45 }}
+          frameloop={tabVisible ? "always" : "never"}
+          gl={{
+            antialias: true,
+            powerPreference: "high-performance",
+          }}
+        >
+          <fogExp2 attach="fog" args={["#0A0F0D", 0.038]} />
+          {/* Performance Monitor */}
+          <PerformanceMonitor onDecline={handlePerformanceDrop} />
+
+          {/* Lighting (No environment maps, pure warm key + teal rim) */}
+          <color attach="background" args={["#0A0F0D"]} />
+          <ambientLight intensity={0.4} color="#E8EFE9" />
+          <directionalLight position={[5, 8, 5]} intensity={1.5} color="#FFF5E0" />
+          <directionalLight position={[-5, -2, -3]} intensity={0.8} color="#2FB39A" />
+          <pointLight position={[0.75, 0.5, 0]} intensity={1.2} color="#C8A45C" distance={6} />
+
+          {/* Camera Controller & Parallax */}
+          <CameraRig />
+
+          {/* 60 Hexagonal Prism Blocks */}
+          <ChainMesh />
+
+          {/* Postprocessing (Bloom max 0.5, subtle Vignette) */}
+          {enableEffects && (
+            <EffectComposer multisampling={0}>
+              <Bloom
+                intensity={0.45}
+                luminanceThreshold={0.25}
+                luminanceSmoothing={0.9}
+                mipmapBlur
+              />
+              <Vignette eskil={false} offset={0.18} darkness={0.65} />
+            </EffectComposer>
+          )}
+        </Canvas>
+      </WebGLErrorBoundary>
+    </div>
+  );
+}
+export default ChainScene;

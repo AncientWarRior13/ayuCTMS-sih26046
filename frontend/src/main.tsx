@@ -25,6 +25,7 @@ import NotFound from "./routes/NotFound";
 const Landing = lazy(() => import("./routes/Landing"));
 const Login = lazy(() => import("./routes/Login"));
 const DevKit = lazy(() => import("./routes/DevKit"));
+const Lab = lazy(() => import("./routes/Lab"));
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -85,6 +86,14 @@ createRoot(document.getElementById("root")!).render(
                 element={
                   <PageSuspense>
                     <DevKit />
+                  </PageSuspense>
+                }
+              />
+              <Route
+                path="/lab"
+                element={
+                  <PageSuspense>
+                    <Lab />
                   </PageSuspense>
                 }
               />

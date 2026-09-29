@@ -11,3 +11,4 @@ dist/
 data/raw/synthea_fhir_r4/
 *.tsbuildinfo
 *.zip
+pgsql/

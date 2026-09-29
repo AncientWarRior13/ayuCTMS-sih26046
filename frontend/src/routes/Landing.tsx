@@ -1,375 +1,582 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
-import { ROLE_HOMES } from "./paths";
+import Lenis from "lenis";
+import {
+  Activity,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Database,
+  ExternalLink,
+  Eye,
+  FileCheck,
+  Fingerprint,
+  Layers,
+  Lock,
+  RefreshCw,
+  Shield,
+  ShieldAlert,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import ChainScene from "../components/landing/three/ChainScene";
+import { SceneProvider, useSceneProgress } from "../components/landing/three/SceneContext";
+import { STATIONS } from "../components/landing/three/types";
 
-interface Particle { x:number;y:number;vx:number;vy:number;r:number;alpha:number;color:string; }
+// Unfold 3 Problem -> Solution statements
+const UNFOLD_STATEMENTS = [
+  {
+    step: "01",
+    tag: "TAMPER-EVIDENT RECORDING",
+    problem: "Traditional trial spreadsheets allow retroactive edits and missing date stamps.",
+    solution: "AyuCTMS calculates cryptographic SHA-256 block hashes on every CRF mutation. Any retroactive alteration breaks the forward chain immediately.",
+  },
+  {
+    step: "02",
+    tag: "STRICT AYUSH ONTOLOGIES",
+    problem: "Generic western EDC systems lack native Prakriti, Vikriti, Agni, and Ayush Morbidity vocabularies.",
+    solution: "Built-in CDISC CT codelists + 30 Ayush morbidity terms mapped directly to CDISC SDTM and WHO-ART standards.",
+  },
+  {
+    step: "03",
+    tag: "REGULATORY SAE TIMERS",
+    problem: "Adverse events reported after the 24-hour statutory deadline risk clinical suspension.",
+    solution: "Hardware-precise 1Hz PV countdown clocks notify CDSCO, Sponsor, and IEC with automated audit trail generation.",
+  },
+];
 
-function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
+// Live mini-readout component for How It Works
+function StationReadout({ station }: { station: (typeof STATIONS)[number] }) {
+  const [countdown, setCountdown] = useState({ h: 18, m: 42, s: 10 });
+
   useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    let raf: number;
-    const particles: Particle[] = [];
-    const COLORS = ["#2FB39A","#C8A45C","#6FA36B","#7A8FB8","#E0713A"];
-    const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    };
-    resize(); window.addEventListener("resize", resize);
-    for (let i=0;i<80;i++) particles.push({ x:Math.random()*(canvas.offsetWidth||window.innerWidth), y:Math.random()*(canvas.offsetHeight||window.innerHeight), vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3, r:Math.random()*2+0.5, alpha:Math.random()*0.6+0.1, color:COLORS[Math.floor(Math.random()*COLORS.length)] });
-    const draw = () => {
-      const w=canvas.offsetWidth; const h=canvas.offsetHeight;
-      ctx.clearRect(0,0,w,h);
-      for (let i=0;i<particles.length;i++) { for (let j=i+1;j<particles.length;j++) { const dx=particles[i].x-particles[j].x; const dy=particles[i].y-particles[j].y; const dist=Math.sqrt(dx*dx+dy*dy); if (dist<120) { ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle=`rgba(47,179,154,${0.08*(1-dist/120)})`; ctx.lineWidth=0.5; ctx.stroke(); } } }
-      particles.forEach((p)=>{ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>w)p.vx*=-1; if(p.y<0||p.y>h)p.vy*=-1; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=p.color+Math.round(p.alpha*255).toString(16).padStart(2,"0"); ctx.fill(); });
-      raf=requestAnimationFrame(draw);
-    };
-    draw();
-    return ()=>{ cancelAnimationFrame(raf); window.removeEventListener("resize",resize); };
-  }, [canvasRef]);
-}
+    if (station.readoutType !== "sae") return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev.s > 0) return { ...prev, s: prev.s - 1 };
+        if (prev.m > 0) return { ...prev, m: 59, s: 59 };
+        return { h: Math.max(0, prev.h - 1), m: 59, s: 59 };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [station.readoutType]);
 
-function useTilt(ref: React.RefObject<HTMLDivElement | null>) {
-  const [rot,setRot]=useState({rotX:0,rotY:0});
-  useEffect(()=>{
-    const el=ref.current; if(!el) return;
-    const onMove=(e:MouseEvent)=>{ const rect=el.getBoundingClientRect(); const cx=rect.left+rect.width/2; const cy=rect.top+rect.height/2; setRot({rotX:-((e.clientY-cy)/rect.height)*10,rotY:((e.clientX-cx)/rect.width)*16}); };
-    const onLeave=()=>setRot({rotX:0,rotY:0});
-    el.addEventListener("mousemove",onMove); el.addEventListener("mouseleave",onLeave);
-    return ()=>{ el.removeEventListener("mousemove",onMove); el.removeEventListener("mouseleave",onLeave); };
-  },[ref]);
-  return rot;
-}
-
-function AnimatedCounter({target,suffix="",duration=2000}:{target:number;suffix?:string;duration?:number}) {
-  const [val,setVal]=useState(0); const ref=useRef<HTMLSpanElement>(null);
-  useEffect(()=>{ const obs=new IntersectionObserver(([e])=>{ if(!e.isIntersecting)return; obs.disconnect(); const start=performance.now(); const tick=(now:number)=>{ const t=Math.min((now-start)/duration,1); const ease=1-Math.pow(1-t,3); setVal(Math.floor(ease*target)); if(t<1)requestAnimationFrame(tick); }; requestAnimationFrame(tick); },{threshold:0.5}); if(ref.current)obs.observe(ref.current); return ()=>obs.disconnect(); },[target,duration]);
-  return <span ref={ref} className="tabular-nums">{val.toLocaleString()}{suffix}</span>;
-}
-
-function FeatureCard({icon,title,desc,accent,delay}:{icon:React.ReactNode;title:string;desc:string;accent:string;delay:number}) {
-  const ref=useRef<HTMLDivElement>(null); const {rotX,rotY}=useTilt(ref); const [visible,setVisible]=useState(false);
-  useEffect(()=>{ const obs=new IntersectionObserver(([e])=>{ if(e.isIntersecting){setVisible(true);obs.disconnect();} },{threshold:0.1}); if(ref.current)obs.observe(ref.current); return ()=>obs.disconnect(); },[]);
   return (
-    <div ref={ref} style={{ transform:`perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg)`, transition:"transform 0.1s ease, opacity 0.6s ease", opacity:visible?1:0, transitionDelay:`${delay}ms` }}
-      className="relative group rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-6 overflow-hidden cursor-default">
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{background:`radial-gradient(circle at 50% 0%, ${accent}22 0%, transparent 70%)`}}/>
-      <div className="absolute top-0 left-6 right-6 h-px" style={{background:`linear-gradient(90deg, transparent, ${accent}60, transparent)`}}/>
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{background:`${accent}18`,border:`1px solid ${accent}35`}}>
-        <span style={{color:accent}}>{icon}</span>
+    <div className="mt-4 p-4 rounded-xl bg-[#101815] border border-[#22302A] font-mono text-xs shadow-lg">
+      <div className="flex items-center justify-between text-[#8FA398] text-[11px] mb-1.5">
+        <span className="flex items-center gap-1.5 font-semibold tracking-wider text-[#C8A45C]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C8A45C]" />
+          {station.readoutData.label}
+        </span>
+        <span className="text-[10px] px-2 py-0.5 rounded bg-[#16201C] border border-[#22302A] text-[#2FB39A]">
+          LIVE
+        </span>
       </div>
-      <h3 className="font-display text-base font-bold text-[var(--text)] mb-2">{title}</h3>
-      <p className="text-sm text-[var(--text-muted)] leading-relaxed">{desc}</p>
+
+      <div className="text-[#E8EFE9] font-medium text-sm my-1 break-all">
+        {station.readoutType === "sae" ? (
+          <span className="text-[#F2A93B] font-bold">
+            {String(countdown.h).padStart(2, "0")}h : {String(countdown.m).padStart(2, "0")}m :{" "}
+            {String(countdown.s).padStart(2, "0")}s
+          </span>
+        ) : (
+          station.readoutData.value
+        )}
+      </div>
+
+      <div className="text-[11px] text-[#56685F] mt-1">{station.readoutData.subtext}</div>
     </div>
   );
 }
 
-function RoleCard({role,desc,color,index,total}:{role:string;desc:string;color:string;index:number;total:number}) {
-  const angle=(index/total)*360; const rad=(angle*Math.PI)/180; const r=180;
-  const x=Math.cos(rad-Math.PI/2)*r; const y=Math.sin(rad-Math.PI/2)*r;
-  const [hovered,setHovered]=useState(false);
-  return (
-    <div className="absolute" style={{left:`calc(50% + ${x}px)`,top:`calc(50% + ${y}px)`,transform:"translate(-50%,-50%)",zIndex:hovered?10:1}} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}>
-      <div className="relative rounded-xl border px-3 py-2 text-center cursor-default transition-all duration-300"
-        style={{background:hovered?`${color}22`:"var(--surface-1)",borderColor:hovered?`${color}80`:"var(--border)",boxShadow:hovered?`0 0 20px ${color}40`:"none",transform:hovered?"scale(1.15)":"scale(1)",minWidth:"100px"}}>
-        <div className="text-xs font-mono font-bold" style={{color}}>{role}</div>
-        <div className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-tight">{desc}</div>
-      </div>
-    </div>
-  );
-}
+// Inner Landing Content that consumes useSceneProgress
+function LandingContent() {
+  const {
+    progress,
+    setProgress,
+    tamperState,
+    onRestore,
+    activeStationIndex,
+    isMobileOrReduced,
+  } = useSceneProgress();
 
-function HeroCard() {
-  const ref=useRef<HTMLDivElement>(null); const {rotX,rotY}=useTilt(ref);
-  const [tick,setTick]=useState(0);
-  useEffect(()=>{ const id=setInterval(()=>setTick(t=>t+1),1000); return ()=>clearInterval(id); },[]);
-  const hours=Math.floor(tick/3600); const mins=Math.floor((tick%3600)/60); const secs=tick%60;
-  const pct=Math.min((tick/259200)*100,100);
-  const color=pct<50?"var(--ok)":pct<80?"var(--warn)":"var(--danger)";
+  const journeyRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Lenis smooth scroll and update progress
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+    });
+
+    const handleScroll = () => {
+      if (!journeyRef.current) return;
+      const rect = journeyRef.current.getBoundingClientRect();
+      const journeyHeight = rect.height - window.innerHeight;
+      if (journeyHeight <= 0) return;
+
+      const scrolled = -rect.top;
+      const rawP = Math.max(0, Math.min(1, scrolled / journeyHeight));
+      setProgress(rawP);
+    };
+
+    lenis.on("scroll", handleScroll);
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    const rafId = requestAnimationFrame(raf);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      lenis.destroy();
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [setProgress]);
+
   return (
-    <div ref={ref} style={{transform:`perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg)`,transition:"transform 0.15s ease"}} className="relative w-full max-w-sm mx-auto">
-      <div className="absolute -inset-6 bg-[var(--brand)]/5 rounded-3xl blur-2xl"/>
-      <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] overflow-hidden shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] bg-[var(--surface-2)]">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-[var(--brand)]/20 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-3 h-3 text-[var(--brand)] fill-none stroke-current stroke-2"><path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z"/><path d="M11 3v17"/></svg>
+    <div className="relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
+      {/* 3D WebGL Background Canvas */}
+      <ChainScene />
+
+      {/* Top Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-[#22302A]/60 bg-[#0A0F0D]/70 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#16201C] border border-[#2FB39A]/40 text-[#2FB39A]">
+              <Database className="h-4 w-4" />
             </div>
-            <span className="text-xs font-mono font-bold text-[var(--text)]">SAE-2024-0042</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-[var(--ok)] animate-pulse"/>
-            <span className="text-[10px] font-mono text-[var(--ok)]">LIVE</span>
-          </div>
-        </div>
-        <div className="p-5 flex items-center gap-4">
-          <div className="relative flex-shrink-0">
-            <svg viewBox="0 0 80 80" className="w-20 h-20">
-              <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border)" strokeWidth="4"/>
-              <circle cx="40" cy="40" r="32" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeDasharray={`${2*Math.PI*32}`} strokeDashoffset={`${2*Math.PI*32*(1-pct/100)}`} transform="rotate(-90 40 40)" style={{transition:"stroke-dashoffset 0.8s ease,stroke 0.3s"}}/>
-              <text x="40" y="36" textAnchor="middle" fill="var(--text)" fontSize="11" fontFamily="monospace" fontWeight="bold">{String(hours).padStart(2,"0")}:{String(mins).padStart(2,"0")}</text>
-              <text x="40" y="50" textAnchor="middle" fill="var(--text-muted)" fontSize="9" fontFamily="monospace">:{String(secs).padStart(2,"0")}</text>
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1">72h Reporting Window</div>
-            <div className="text-sm font-semibold text-[var(--text)]">Bradycardia - Grade 3</div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-1">Ashwagandha Beta-blocker</div>
-            <div className="mt-2 flex gap-1.5">
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--warn-bg)] text-[var(--warn)] border border-[var(--warn-border)]">PRR 4.2</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--info-bg)] text-[var(--info)] border border-[var(--info-border)]">IEC REVIEW</span>
+            <div>
+              <span className="font-serif text-lg font-bold tracking-tight text-[#E8EFE9]">
+                AyuCTMS
+              </span>
+              <span className="ml-2 text-[10px] uppercase tracking-wider text-[#8FA398]">
+                SIH26046 · Ministry of Ayush
+              </span>
             </div>
           </div>
+
+          <div className="flex items-center gap-4">
+            <Link
+              to="/lab"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-[#C8A45C] bg-[#16201C] hover:bg-[#1D2A24] border border-[#C8A45C]/30 rounded-lg transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              3D Lab Rig
+            </Link>
+
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#2FB39A] px-4 py-2 text-xs font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-colors"
+            >
+              Sign In
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
-        <div className="px-5 pb-4">
-          <div className="text-[9px] font-mono text-[var(--text-faint)] uppercase tracking-wider mb-2">Hash Chain</div>
-          <div className="flex items-center gap-1">
-            {["a3f2","c891","7d4e","b2a1","e5f9"].map((hash,i)=>(
-              <div key={i} className="flex items-center gap-1">
-                <div className="px-1.5 py-0.5 rounded bg-[var(--surface-3)] border border-[var(--border)] text-[8px] font-mono text-[var(--brand)]">{hash}...</div>
-                {i<4&&<div className="w-3 h-px bg-[var(--brand)]/40"/>}
+      </header>
+
+      {/* ============================================================ */}
+      {/* PINNED SCROLL JOURNEY CONTAINER (550vh)                        */}
+      {/* Drives progress 0.0 -> 1.0                                   */}
+      {/* ============================================================ */}
+      <div
+        ref={journeyRef}
+        className={isMobileOrReduced ? "relative" : "relative h-[550vh]"}
+      >
+        <div
+          className={
+            isMobileOrReduced
+              ? "relative pt-24 px-6 space-y-24"
+              : "sticky top-0 h-screen w-full overflow-hidden pointer-events-none"
+          }
+        >
+          {/* ========================================================== */}
+          {/* HERO SECTION (Progress 0.00 - 0.12)                         */}
+          {/* ========================================================== */}
+          <section
+            className={`absolute inset-0 flex items-center transition-opacity duration-500 ${
+              isMobileOrReduced || progress <= 0.14
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="mx-auto w-full max-w-7xl px-6 pt-16">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                {/* Left Column (Hero Content) */}
+                <div className="lg:col-span-6 space-y-6">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3.5 py-1 text-xs text-[#C8A45C]">
+                    <span className="w-2 h-2 rounded-full bg-[#2FB39A]" />
+                    Tamper-Evident Ayurveda Clinical Trials
+                  </div>
+
+                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.1] tracking-tight text-[#E8EFE9]">
+                    Cryptographic integrity for traditional medicine research.
+                  </h1>
+
+                  <p className="text-base text-[#8FA398] leading-relaxed max-w-xl">
+                    Every participant consent, Ayurvedic CRF entry, and adverse event anchored in a
+                    forward-secure cryptographic audit chain. Purpose-built for GCP Schedule Y,
+                    CDISC SDTM, and DPDP 2023 compliance.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#2FB39A] px-6 py-3 text-sm font-semibold text-[#0A0F0D] hover:bg-[#269984] shadow-lg shadow-[#2FB39A]/20 transition-all hover:scale-[1.02]"
+                    >
+                      Enter Workspace
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <a
+                      href="#spec"
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#22302A] bg-[#101815] px-5 py-3 text-sm font-medium text-[#E8EFE9] hover:bg-[#16201C] transition-colors"
+                    >
+                      Regulatory Spec
+                    </a>
+                  </div>
+
+                  {/* Interactive Tamper Status Chip */}
+                  <div className="pt-4">
+                    {tamperState.tamperedIndex !== null ? (
+                      <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#E5484D]/15 border border-[#E5484D]/40 text-[#E5484D] text-xs font-mono shadow-xl animate-pulse">
+                        <ShieldAlert className="w-4 h-4 text-[#E5484D]" />
+                        <span>CHAIN BROKEN AT BLOCK #{tamperState.tamperedIndex}</span>
+                        <button
+                          onClick={onRestore}
+                          className="ml-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#2FB39A] hover:bg-[#269984] text-[#0A0F0D] font-bold text-xs transition-colors"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Restore Chain
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 text-xs text-[#56685F] font-mono">
+                        <Fingerprint className="w-3.5 h-3.5 text-[#C8A45C]" />
+                        <span>Interactive 3D: Click any petal block in the lotus to test tamper detection</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column: Empty to leave space for 3D Lotus */}
+                <div className="hidden lg:block lg:col-span-6 pointer-events-none" />
+              </div>
+            </div>
+          </section>
+
+          {/* ========================================================== */}
+          {/* UNFOLD SECTION (Progress 0.14 - 0.38)                       */}
+          {/* Text in left 45%, 3D chain line visible on right           */}
+          {/* ========================================================== */}
+          <section
+            className={`absolute inset-0 flex items-center transition-opacity duration-500 ${
+              !isMobileOrReduced && progress > 0.14 && progress <= 0.38
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="mx-auto w-full max-w-7xl px-6">
+              <div className="w-full lg:w-[45%] space-y-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3 py-1 text-xs text-[#C8A45C]">
+                  <span>The Architectural Transformation</span>
+                </div>
+
+                <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9] leading-tight">
+                  From scattered clinical spreadsheets to a verified blockchain ledger.
+                </h2>
+
+                <div className="space-y-4 pt-2">
+                  {UNFOLD_STATEMENTS.map((item) => (
+                    <div
+                      key={item.step}
+                      className="p-4 rounded-xl bg-[#101815]/90 border border-[#22302A] backdrop-blur-md"
+                    >
+                      <div className="flex items-center justify-between text-xs font-mono text-[#C8A45C] mb-1">
+                        <span>{item.tag}</span>
+                        <span>{item.step}</span>
+                      </div>
+                      <div className="text-xs text-[#8FA398] line-through mb-1.5 opacity-80">
+                        {item.problem}
+                      </div>
+                      <div className="text-xs text-[#E8EFE9] leading-relaxed">
+                        {item.solution}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ========================================================== */}
+          {/* HOW IT WORKS SECTION (Progress 0.38 - 0.85)                 */}
+          {/* Left rail with 5 stations + live readouts                  */}
+          {/* ========================================================== */}
+          <section
+            className={`absolute inset-0 flex items-center transition-opacity duration-500 ${
+              !isMobileOrReduced && progress > 0.38 && progress <= 0.85
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="mx-auto w-full max-w-7xl px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                {/* Left Rail: 5 Stations */}
+                <div className="lg:col-span-5 space-y-3">
+                  <div className="text-xs font-mono text-[#C8A45C] uppercase tracking-wider mb-2">
+                    Station {activeStationIndex + 1} of 5 · Clinical Data Pipeline
+                  </div>
+
+                  {STATIONS.map((station, idx) => {
+                    const isActive = idx === activeStationIndex;
+                    return (
+                      <div
+                        key={station.title}
+                        className={`p-4 rounded-xl transition-all duration-300 border ${
+                          isActive
+                            ? "bg-[#101815] border-[#2FB39A] shadow-lg shadow-[#2FB39A]/10 scale-[1.02]"
+                            : "bg-[#101815]/40 border-[#22302A] opacity-50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3
+                            className={`text-sm font-semibold ${
+                              isActive ? "text-[#E8EFE9]" : "text-[#8FA398]"
+                            }`}
+                          >
+                            {station.title}
+                          </h3>
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                              isActive
+                                ? "bg-[#2FB39A]/15 text-[#39C8AD] border border-[#2FB39A]/30"
+                                : "bg-[#16201C] text-[#56685F]"
+                            }`}
+                          >
+                            {station.badge}
+                          </span>
+                        </div>
+
+                        {isActive && (
+                          <div className="mt-2 space-y-3">
+                            <p className="text-xs text-[#8FA398] leading-relaxed">
+                              {station.description}
+                            </p>
+                            <StationReadout station={station} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right Column: Open tunnel view for 3D corridor */}
+                <div className="hidden lg:block lg:col-span-7" />
+              </div>
+            </div>
+          </section>
+
+          {/* ========================================================== */}
+          {/* FINAL CTA SECTION (Progress 0.85 - 1.00)                    */}
+          {/* Centered headline, verified lotus glowing behind it         */}
+          {/* ========================================================== */}
+          <section
+            className={`absolute inset-0 flex items-center justify-center text-center transition-opacity duration-500 ${
+              !isMobileOrReduced && progress > 0.85
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="max-w-2xl px-6 space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#2FB39A]/50 bg-[#101815] px-4 py-1.5 text-xs text-[#39C8AD] shadow-lg shadow-[#2FB39A]/15">
+                <CheckCircle2 className="w-4 h-4 text-[#2FB39A]" />
+                All 60 Cryptographic Blocks Verified · Hash Chain Intact
+              </div>
+
+              <h2 className="font-serif text-4xl sm:text-5xl font-normal text-[#E8EFE9] leading-tight">
+                Ready to run compliance-grade Ayurvedic clinical trials?
+              </h2>
+
+              <p className="text-base text-[#8FA398] leading-relaxed">
+                Connect your institutional trial sites, launch prospectively registered CTRI
+                protocols, and automate pharmacovigilance reporting.
+              </p>
+
+              <div className="pt-2">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#2FB39A] px-8 py-3.5 text-sm font-semibold text-[#0A0F0D] hover:bg-[#269984] shadow-xl shadow-[#2FB39A]/30 transition-all hover:scale-105"
+                >
+                  Enter Clinical Workspace
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* SOLID SECTIONS: Bento, Roles, Regulatory, Footer             */}
+      {/* Sits after the pinned journey on solid bg covering canvas     */}
+      {/* ============================================================ */}
+      <div id="spec" className="relative z-10 bg-[#0A0F0D] border-t border-[#22302A]">
+        {/* Bento Grid */}
+        <section className="mx-auto max-w-7xl px-6 py-24">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9]">
+              Built for regulatory scrutiny from day zero
+            </h2>
+            <p className="text-sm text-[#8FA398]">
+              Compliant with the National Pharmacovigilance Programme for ASU Drugs and Schedule Y
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#2FB39A]">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-lg text-[#E8EFE9]">Schedule Y PV Clocks</h3>
+              <p className="text-xs text-[#8FA398] leading-relaxed">
+                Automated 24-hour statutory timers for serious adverse reactions (ADR/SAE).
+                Deterministic escalations notify the licensing authority and ethics committee.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#C8A45C]">
+                <FileCheck className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-lg text-[#E8EFE9]">CDISC SDTM & FHIR R4</h3>
+              <p className="text-xs text-[#8FA398] leading-relaxed">
+                Export submission-ready SDTM DM and AE domains alongside de-identified FHIR R4
+                ResearchStudy bundles for international peer review.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#4C8DFF]">
+                <Lock className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-lg text-[#E8EFE9]">Row-Level Security (RLS)</h3>
+              <p className="text-xs text-[#8FA398] leading-relaxed">
+                PostgreSQL multi-tenant database policies enforce strict site isolation.
+                Coordinators at Site 1 cannot view or modify participant data from Site 2.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#2FBF71]">
+                <Shield className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-lg text-[#E8EFE9]">DPDP Act 2023 Consent</h3>
+              <p className="text-xs text-[#8FA398] leading-relaxed">
+                Direct participant identifiers encrypted with Fernet AES-128. Consent withdrawal
+                immediately freezes future CRF data collection while retaining past audits.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#E0713A]">
+                <Activity className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-lg text-[#E8EFE9]">Classical Prakriti CRFs</h3>
+              <p className="text-xs text-[#8FA398] leading-relaxed">
+                Standardized forms capturing Vata, Pitta, Kapha, Agni, and Kostha phenotypes alongside
+                conventional biochemical and hematological laboratory panels.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#7A8FB8]">
+                <Eye className="w-5 h-5" />
+              </div>
+              <h3 className="font-serif text-lg text-[#E8EFE9]">Zero-Write Auditor Role</h3>
+              <p className="text-xs text-[#8FA398] leading-relaxed">
+                Specialized regulator persona with strict read-only access. Every inspection view is
+                itself immutably logged into the system audit trail.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Roles Section */}
+        <section className="mx-auto max-w-7xl px-6 py-20 border-t border-[#22302A]">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9]">
+              Seven specialized stakeholder personas
+            </h2>
+            <p className="text-sm text-[#8FA398]">
+              Tailored dashboards designed specifically for each role's compliance duties
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+            {[
+              { role: "PI", name: "Principal Investigator", desc: "Protocol & Approvals" },
+              { role: "COORD", name: "Study Coordinator", desc: "Patient Visits & CRF" },
+              { role: "MONITOR", name: "CRA Monitor", desc: "Source Data SDV" },
+              { role: "IEC", name: "Ethics Committee", desc: "Expiry & Safety Reviews" },
+              { role: "PV", name: "Safety Officer", desc: "24h SAE Timelines" },
+              { role: "ADMIN", name: "System Admin", desc: "Users & Rule Sets" },
+              { role: "REGULATOR", name: "CDSCO Auditor", desc: "Read-only Inspection" },
+            ].map((item) => (
+              <div
+                key={item.role}
+                className="p-3.5 rounded-xl bg-[#101815] border border-[#22302A] text-center space-y-1.5"
+              >
+                <div className="text-xs font-mono font-bold text-[#2FB39A]">{item.role}</div>
+                <div className="text-xs font-medium text-[#E8EFE9]">{item.name}</div>
+                <div className="text-[10px] text-[#56685F]">{item.desc}</div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+        </section>
 
-function FloatingCube({size=60,x=0,y=0,color="#2FB39A",speed=8}:{size?:number;x?:number|string;y?:number|string;color?:string;speed?:number}) {
-  const [rot,setRot]=useState({x:20,y:30});
-  useEffect(()=>{ let frame:number; let angle=0; const tick=()=>{ angle+=0.005*speed; setRot({x:20+Math.sin(angle*0.7)*15,y:angle*30%360}); frame=requestAnimationFrame(tick); }; frame=requestAnimationFrame(tick); return ()=>cancelAnimationFrame(frame); },[speed]);
-  const s=size; const hs=s/2;
-  const faces=[{t:`translateZ(${hs}px)`},{t:`translateZ(${-hs}px) rotateY(180deg)`},{t:`translateX(${hs}px) rotateY(90deg)`},{t:`translateX(${-hs}px) rotateY(-90deg)`},{t:`translateY(${-hs}px) rotateX(90deg)`},{t:`translateY(${hs}px) rotateX(-90deg)`}];
-  return (
-    <div className="absolute pointer-events-none" style={{left:x,top:y,width:s,height:s,perspective:400}}>
-      <div style={{width:s,height:s,position:"relative",transformStyle:"preserve-3d",transform:`rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,transition:"transform 0.05s linear"}}>
-        {faces.map(({t},i)=><div key={i} style={{position:"absolute",width:s,height:s,transform:t,background:`${color}08`,border:`1px solid ${color}40`,borderRadius:4}}/>)}
-      </div>
-    </div>
-  );
-}
+        {/* Footer */}
+        <footer className="border-t border-[#22302A] py-12 px-6">
+          <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <Database className="w-5 h-5 text-[#2FB39A]" />
+              <span className="font-serif font-bold text-sm text-[#E8EFE9]">AyuCTMS</span>
+              <span className="text-xs text-[#56685F]">
+                © 2026 Smart India Hackathon · Problem Statement 26046
+              </span>
+            </div>
 
-function TimelineStep({number,title,desc,visible,delay}:{number:string;title:string;desc:string;visible:boolean;delay:number}) {
-  return (
-    <div className="flex gap-5" style={{opacity:visible?1:0,translate:visible?"0 0":"0 30px",transition:`opacity 0.6s ease ${delay}ms, translate 0.6s ease ${delay}ms`}}>
-      <div className="flex flex-col items-center">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-sm text-[var(--brand)] border border-[var(--brand)]/40 bg-[var(--brand)]/10 flex-shrink-0">{number}</div>
-        <div className="flex-1 w-px bg-[var(--border)] mt-2"/>
-      </div>
-      <div className="pb-8">
-        <div className="font-semibold text-[var(--text)] mb-1">{title}</div>
-        <div className="text-sm text-[var(--text-muted)] leading-relaxed">{desc}</div>
+            <div className="flex items-center gap-6 text-xs text-[#8FA398]">
+              <Link to="/lab" className="hover:text-[#2FB39A] transition-colors">
+                3D Lab
+              </Link>
+              <Link to="/login" className="hover:text-[#2FB39A] transition-colors">
+                Sign In
+              </Link>
+              <a
+                href="https://ayush.gov.in"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 hover:text-[#2FB39A] transition-colors"
+              >
+                Ministry of Ayush
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
 }
 
 export default function Landing() {
-  const { me } = useAuth();
-  const canvasRef=useRef<HTMLCanvasElement>(null);
-  const [scrollY,setScrollY]=useState(0);
-  const [timelineVisible,setTimelineVisible]=useState(false);
-  const [statsVisible,setStatsVisible]=useState(false);
-  const timelineRef=useRef<HTMLDivElement>(null);
-  const statsRef=useRef<HTMLDivElement>(null);
-  useParticleCanvas(canvasRef);
-  useEffect(()=>{ const onScroll=()=>setScrollY(window.scrollY); window.addEventListener("scroll",onScroll,{passive:true}); return ()=>window.removeEventListener("scroll",onScroll); },[]);
-  useEffect(()=>{ const obs=new IntersectionObserver(([e])=>{ if(e.isIntersecting){setTimelineVisible(true);obs.disconnect();} },{threshold:0.2}); if(timelineRef.current)obs.observe(timelineRef.current); return ()=>obs.disconnect(); },[]);
-  useEffect(()=>{ const obs=new IntersectionObserver(([e])=>{ if(e.isIntersecting){setStatsVisible(true);obs.disconnect();} },{threshold:0.3}); if(statsRef.current)obs.observe(statsRef.current); return ()=>obs.disconnect(); },[]);
-  const parallax=scrollY*0.3;
-  const heroOpacity=Math.max(0,1-scrollY/600);
-  const userHome = me ? (ROLE_HOMES[me.role] || "/app/pi") : "/login";
-  const roles=[
-    {role:"PI",desc:"Principal Investigator",color:"#2FB39A"},
-    {role:"COORD",desc:"Clinical Coordinator",color:"#C8A45C"},
-    {role:"MONITOR",desc:"Trial Monitor",color:"#7A8FB8"},
-    {role:"IEC",desc:"Ethics Committee",color:"#6FA36B"},
-    {role:"PV",desc:"Pharmacovigilance",color:"#E0713A"},
-    {role:"ADMIN",desc:"System Administrator",color:"#E5484D"},
-    {role:"REGULATOR",desc:"Auditor (Read-Only)",color:"#8FA398"},
-  ];
   return (
-    <div className="relative bg-[var(--bg)] min-h-screen overflow-x-hidden">
-      <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none" style={{opacity:0.4}}/>
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute -top-60 -left-60 w-[600px] h-[600px] rounded-full blur-[120px]" style={{background:"rgba(47,179,154,0.08)"}}/>
-        <div className="absolute top-1/2 -right-60 w-[500px] h-[500px] rounded-full blur-[100px]" style={{background:"rgba(200,164,92,0.06)"}}/>
-        <div className="absolute -bottom-60 left-1/4 w-[400px] h-[400px] rounded-full blur-[100px]" style={{background:"rgba(111,163,107,0.05)"}}/>
-      </div>
-      <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 sm:px-10 h-16"
-        style={{background:scrollY>40?"rgba(10,15,13,0.85)":"transparent",backdropFilter:scrollY>40?"blur(16px)":"none",borderBottom:scrollY>40?"1px solid var(--border)":"1px solid transparent",transition:"all 0.3s"}}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#0A2018] flex items-center justify-center" style={{boxShadow:"0 0 12px var(--brand-glow)"}}>
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-white fill-none stroke-current stroke-2"><path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z"/><path d="M11 3v17"/><circle cx="11" cy="13" r="2" fill="currentColor"/></svg>
-          </div>
-          <span className="font-display font-bold text-[var(--text)] text-lg">AyuCTMS</span>
-          <span className="hidden sm:block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--brand)]/15 text-[var(--brand)] border border-[var(--brand)]/30">SIH 26046</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden md:block text-xs text-[var(--text-muted)] font-mono">Ministry of Ayush</span>
-          <Link to={userHome} className="px-4 py-2 rounded-lg text-sm font-semibold text-[var(--brand)] border border-[var(--brand)]/40 hover:bg-[var(--brand)]/10 hover:border-[var(--brand)] transition-all duration-200">
-            {me ? "Open Workspace" : "Sign In"}
-          </Link>
-        </div>
-      </nav>
-      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-8 pt-20" style={{opacity:heroOpacity}}>
-        <FloatingCube size={50} x={80} y={120} color="#2FB39A" speed={6}/>
-        <FloatingCube size={35} x="calc(100% - 140px)" y={200} color="#C8A45C" speed={9}/>
-        <FloatingCube size={25} x={200} y={520} color="#6FA36B" speed={12}/>
-        <FloatingCube size={40} x="calc(100% - 100px)" y={480} color="#7A8FB8" speed={7}/>
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{transform:`translateY(${parallax*0.5}px)`}}>
-          <svg viewBox="0 0 800 800" className="w-[800px] h-[800px]" style={{opacity:0.04}}>
-            <circle cx="400" cy="400" r="350" stroke="var(--brand)" strokeWidth="1" strokeDasharray="8 8" fill="none"/>
-            <circle cx="400" cy="400" r="280" stroke="var(--accent-brass)" strokeWidth="0.5" strokeDasharray="3 12" fill="none"/>
-            <circle cx="400" cy="400" r="200" stroke="var(--brand)" strokeWidth="1" fill="none"/>
-            <circle cx="400" cy="400" r="120" stroke="var(--accent-brass)" strokeWidth="0.5" strokeDasharray="2 8" fill="none"/>
-            {Array.from({length:12}).map((_,i)=>{ const a=(i/12)*Math.PI*2; return <line key={i} x1={400+Math.cos(a)*120} y1={400+Math.sin(a)*120} x2={400+Math.cos(a)*350} y2={400+Math.sin(a)*350} stroke="var(--brand)" strokeWidth="0.5" opacity="0.5"/>; })}
-          </svg>
-        </div>
-        <div className="relative z-10 max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div style={{transform:`translateY(${-parallax*0.2}px)`}}>
-            <div className="flex flex-wrap items-center gap-2 mb-6">
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--brand)]/15 text-[var(--brand)] border border-[var(--brand)]/30 tracking-wider uppercase">Ministry of Ayush</span>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--accent-brass)]/15 text-[var(--accent-brass)] border border-[var(--accent-brass)]/30 tracking-wider uppercase">AIIA PS 26046</span>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--info-bg)] text-[var(--info)] border border-[var(--info-border)] tracking-wider uppercase">SIH 2026</span>
-            </div>
-            <h1 className="font-display font-bold leading-none tracking-tight text-[var(--text)] mb-4" style={{fontSize:"clamp(3rem,8vw,5rem)",fontFamily:"Fraunces,Georgia,serif"}}>
-              Ayu<span style={{background:"linear-gradient(135deg,var(--brand),var(--accent-brass))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>CTMS</span>
-            </h1>
-            <p className="text-lg sm:text-xl text-[var(--text-muted)] mb-3 leading-relaxed font-light max-w-xl">AI-powered Clinical Trial Management for <span className="text-[var(--accent-brass)] font-medium">Ayurvedic medicine</span>. Where ancient wisdom meets cryptographic precision.</p>
-            <p className="text-sm text-[var(--text-faint)] font-mono mb-8 max-w-lg leading-relaxed">SHA-256 hash-chained audit · 72h SAE countdowns · Herb-drug interaction engine · ALCOA+</p>
-            <div className="flex flex-wrap gap-3">
-              <Link to={userHome} id="cta-explore-dashboard" className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200" style={{background:"linear-gradient(135deg,var(--brand),#1a9982)",boxShadow:"0 0 24px var(--brand-glow)"}}>
-                <span>{me ? "Open Workspace" : "Explore Dashboard"}</span>
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-              </Link>
-              <a href="#features" id="cta-learn-features" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-[var(--text-muted)] border border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text)] transition-all duration-200">
-                <span>See Features</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
-              </a>
-            </div>
-            <div className="mt-10 pt-6 border-t border-[var(--border)] flex flex-wrap gap-4 text-[11px] font-mono text-[var(--text-faint)]">
-              <span>FHIR R4</span><span>CDISC SDTM</span><span>ICH E2B(R3)</span><span>ALCOA+</span><span>GCP Compliant</span>
-            </div>
-          </div>
-          <div className="flex justify-center" style={{transform:`translateY(${parallax*0.15}px)`}}><HeroCard/></div>
-        </div>
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-          <span className="text-[10px] font-mono text-[var(--text-muted)] tracking-wider uppercase">Scroll</span>
-          <div className="w-px h-10 bg-gradient-to-b from-[var(--brand)] to-transparent"/>
-        </div>
-      </section>
-      <section ref={statsRef} className="relative py-16 px-4 sm:px-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[{val:7,suffix:"",label:"Clinical Roles"},{val:72,suffix:"h",label:"SAE Reporting Clock"},{val:256,suffix:"-bit",label:"Hash-Chained Audit"},{val:100,suffix:"%",label:"ALCOA+ Compliance"}].map(({val,suffix,label})=>(
-            <div key={label} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-5 text-center" style={{opacity:statsVisible?1:0,transition:"opacity 0.8s ease"}}>
-              <div className="font-display text-3xl sm:text-4xl font-bold text-[var(--brand)] mb-1">{statsVisible&&<AnimatedCounter target={val} suffix={suffix}/>}</div>
-              <div className="text-xs text-[var(--text-muted)] font-mono">{label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section id="features" className="relative py-20 px-4 sm:px-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-block px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--brand)]/10 text-[var(--brand)] border border-[var(--brand)]/25 mb-4 tracking-wider uppercase">Core Capabilities</div>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text)] mb-3">Instrument-grade precision.<br/><span style={{color:"var(--brand)"}}>Botanical soul.</span></h2>
-            <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto leading-relaxed">Built for 8-hour pharmacovigilance shifts. Designed to make regulators trust at first glance.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <FeatureCard icon={<svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>} title="SHA-256 Audit Chain" desc="Cryptographic append-only log with Merkle checkpoints. Every action is irreversibly hashed and chained. Tamper detection is instant." accent="#2FB39A" delay={0}/>
-            <FeatureCard icon={<svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>} title="72h SAE Live Clocks" desc="1Hz live countdown per adverse event. Color shifts at 50%, 80%, 100% urgency. Static once submitted." accent="#F2A93B" delay={100}/>
-            <FeatureCard icon={<svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2"><path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z"/><path d="M11 3v17"/></svg>} title="Herb-Drug Interaction Engine" desc="Ayurvedic herb interaction matrix with PRR and ROR signal detection. Flag events before they escalate." accent="#C8A45C" delay={200}/>
-            <FeatureCard icon={<svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>} title="7-Role RBAC System" desc="PI, Coordinator, Monitor, IEC, PV, Admin, Regulator. Hide never disable. Permission-driven from /auth/me." accent="#7A8FB8" delay={300}/>
-            <FeatureCard icon={<svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>} title="Consent and PII Vault" desc="Digital consent with quiz validation. PII reveal requires typed purpose, fully audited. Fernet encryption at rest." accent="#6FA36B" delay={400}/>
-            <FeatureCard icon={<svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>} title="Real-time Risk Signals" desc="Evans criteria PRR/ROR detection. WebSocket-driven live alerting. Compliance scrollytelling for regulators." accent="#E0713A" delay={500}/>
-          </div>
-        </div>
-      </section>
-      <section className="relative py-20 px-4 sm:px-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          <div>
-            <div className="inline-block px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--accent-brass)]/10 text-[var(--accent-brass)] border border-[var(--accent-brass)]/25 mb-6 tracking-wider uppercase">Trial Lifecycle</div>
-            <h2 className="font-display text-3xl font-bold text-[var(--text)] mb-4">A precise ledger<br/><span style={{color:"var(--accent-brass)"}}>that grows like a plant.</span></h2>
-            <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-8">From consent to closeout — every event anchored in an immutable chain of custody. The audit trail is the spine.</p>
-            <svg viewBox="0 0 200 200" className="w-40 h-40 opacity-20" fill="none">
-              <path d="M100 180 Q100 120 100 60" stroke="var(--brand)" strokeWidth="1.25" strokeLinecap="round"/>
-              <path d="M100 140 Q130 120 150 100" stroke="var(--brand)" strokeWidth="1.25" strokeLinecap="round"/>
-              <path d="M100 120 Q70 100 50 80" stroke="var(--brand)" strokeWidth="1.25" strokeLinecap="round"/>
-              <path d="M100 100 Q125 85 140 65" stroke="var(--accent-brass)" strokeWidth="1" strokeLinecap="round"/>
-              <circle cx="100" cy="60" r="4" fill="var(--brand)" opacity="0.6"/>
-              <circle cx="150" cy="100" r="3" fill="var(--brand)" opacity="0.4"/>
-              <circle cx="50" cy="80" r="3" fill="var(--accent-brass)" opacity="0.4"/>
-            </svg>
-          </div>
-          <div ref={timelineRef}>
-            <TimelineStep number="01" title="Study Protocol Setup" desc="PI creates study with eligibility criteria, dosing arms, and SAE thresholds. IEC reviews and approves with digital signature." visible={timelineVisible} delay={0}/>
-            <TimelineStep number="02" title="Participant Consent" desc="Digital consent with knowledge quiz. PII encrypted at rest with Fernet key. Correct answers never exposed to wrong roles." visible={timelineVisible} delay={150}/>
-            <TimelineStep number="03" title="Visit and Data Collection" desc="Coordinator logs visits, vitals, deviations. SAE 72h clock starts on event report. Herb-drug interaction check on every entry." visible={timelineVisible} delay={300}/>
-            <TimelineStep number="04" title="Safety Review" desc="PV Officer reviews signals. PRR/ROR calculated per event type. SUSAR escalation with automatic regulatory notification." visible={timelineVisible} delay={450}/>
-            <TimelineStep number="05" title="Audit and Closeout" desc="Regulator reads full UTC-stamped chain. Merkle checkpoint verifies integrity. CDISC SDTM export with SHA-256 manifest." visible={timelineVisible} delay={600}/>
-          </div>
-        </div>
-      </section>
-      <section className="relative py-24 px-4 overflow-hidden">
-        <div className="text-center mb-8">
-          <div className="inline-block px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--info-bg)] text-[var(--info)] border border-[var(--info-border)] mb-4 tracking-wider uppercase">Role Architecture</div>
-          <h2 className="font-display text-3xl font-bold text-[var(--text)] mb-3">One system. <span style={{color:"var(--info)"}}>Seven roles.</span></h2>
-          <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto">Every user sees exactly what they need. Permission-driven from /auth/me.</p>
-        </div>
-        <div className="relative mx-auto" style={{width:480,height:480}}>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--brand)] to-[#0A2018] flex flex-col items-center justify-center border border-[var(--brand)]/50" style={{boxShadow:"0 0 40px var(--brand-glow)"}}>
-              <svg viewBox="0 0 24 24" className="w-8 h-8 text-white fill-none stroke-current stroke-2 mb-1"><path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z"/><path d="M11 3v17"/><circle cx="11" cy="13" r="2" fill="currentColor"/></svg>
-              <span className="text-[9px] font-mono font-bold text-white/80">AyuCTMS</span>
-            </div>
-          </div>
-          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-15">
-            <circle cx="240" cy="240" r="180" fill="none" stroke="var(--brand)" strokeWidth="1" strokeDasharray="4 8"/>
-            <circle cx="240" cy="240" r="120" fill="none" stroke="var(--border)" strokeWidth="1"/>
-          </svg>
-          {roles.map((r,i)=><RoleCard key={r.role} {...r} index={i} total={roles.length}/>)}
-        </div>
-      </section>
-      <section className="relative py-24 px-4 sm:px-8">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="mb-8">
-            <svg viewBox="0 0 120 120" className="w-24 h-24 opacity-30 mx-auto" fill="none">
-              <circle cx="60" cy="60" r="55" stroke="var(--brand)" strokeWidth="0.5" strokeDasharray="4 6"/>
-              <circle cx="60" cy="60" r="40" stroke="var(--accent-brass)" strokeWidth="0.5"/>
-              <circle cx="60" cy="60" r="25" stroke="var(--brand)" strokeWidth="1"/>
-              {Array.from({length:8}).map((_,i)=>{ const a=(i/8)*Math.PI*2; return <line key={i} x1={60+Math.cos(a)*25} y1={60+Math.sin(a)*25} x2={60+Math.cos(a)*55} y2={60+Math.sin(a)*55} stroke="var(--brand)" strokeWidth="0.5" opacity="0.6"/>; })}
-              <circle cx="60" cy="60" r="4" fill="var(--brand)"/>
-            </svg>
-          </div>
-          <div className="inline-block px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-[var(--brand)]/10 text-[var(--brand)] border border-[var(--brand)]/25 mb-6 tracking-wider uppercase">Try the demo — synthetic data only</div>
-          <h2 className="font-display font-bold text-[var(--text)] mb-5 leading-tight" style={{fontSize:"clamp(2rem,5vw,3.5rem)"}}>
-            The chain is intact.<br/><span style={{background:"linear-gradient(135deg,var(--brand),var(--accent-brass))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>Are you ready?</span>
-          </h2>
-          <p className="text-[var(--text-muted)] text-base mb-8 max-w-lg mx-auto leading-relaxed">One-click role exploration with synthetic data. No setup required. See how your role shapes the interface.</p>
-          <Link to={userHome} id="cta-access-gateway" className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-base text-white transition-all duration-200" style={{background:"linear-gradient(135deg,var(--brand),#1a9982)",boxShadow:"0 0 32px var(--brand-glow)"}}>
-            <span>{me ? "Open Workspace" : "Access Gateway"}</span>
-            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </Link>
-          <div className="mt-10 pt-6 border-t border-[var(--border)] text-[10px] font-mono text-[var(--text-faint)]">SYNTHETIC DATA ONLY — NOT REAL PATIENT INFORMATION</div>
-        </div>
-      </section>
-      <footer className="relative border-t border-[var(--border)] py-8 px-6 sm:px-10">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-[var(--brand)]/20 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[var(--brand)] fill-none stroke-current stroke-2"><path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z"/><path d="M11 3v17"/></svg>
-            </div>
-            <span className="font-display font-bold text-sm text-[var(--text)]">AyuCTMS</span>
-          </div>
-          <div className="text-center text-[10px] font-mono text-[var(--text-faint)]">All data is synthetic. Not for clinical use.</div>
-          <div className="text-[10px] font-mono text-[var(--text-faint)]">SIH 2026 · PS 26046 · Ministry of Ayush</div>
-        </div>
-      </footer>
-    </div>
+    <SceneProvider initialProgress={0}>
+      <LandingContent />
+    </SceneProvider>
   );
 }
