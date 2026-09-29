@@ -555,15 +555,32 @@ export default function StudyDetail() {
   if (isLoading) return <Loading />;
   if (error || !s) return <ErrorBox error={error} />;
   return (
-    <div className="space-y-4">
-      <div>
-        <Link to="/studies" className="text-xs text-brand-700 hover:underline">Studies</Link>
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-semibold">{s.protocol_no}</h1>
-          <Badge tone={STATE_TONE[s.state]}>{human(s.state)}</Badge>
-          {s.ctri && <Badge tone="purple">{s.ctri.ctri_number}</Badge>}
+    <div className="space-y-6">
+      <div className="border-b border-[var(--border)] pb-4">
+        <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)] mb-1">
+          <Link to="/studies" className="text-[var(--brand-text)] hover:underline">
+            Studies
+          </Link>
+          <span>/</span>
+          <span className="text-[var(--text)] font-semibold">{s.protocol_no}</span>
         </div>
-        <p className="mt-1 max-w-4xl text-sm text-slate-600">{s.title}</p>
+
+        <div className="flex flex-wrap items-center gap-3 mt-1">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
+            {s.protocol_no}
+          </h1>
+          <Badge tone={STATE_TONE[s.state]} className="px-2 py-0.5 text-xs font-semibold">
+            {human(s.state)}
+          </Badge>
+          {s.ctri && (
+            <Badge tone="purple" className="px-2 py-0.5 text-xs font-mono font-semibold">
+              CTRI: {s.ctri.ctri_number}
+            </Badge>
+          )}
+        </div>
+        <p className="mt-1.5 max-w-4xl text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+          {s.title}
+        </p>
       </div>
       <Tabs<Tab>
         value={tab}

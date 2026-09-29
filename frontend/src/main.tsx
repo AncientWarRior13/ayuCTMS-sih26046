@@ -14,6 +14,7 @@ import AlertsPage from "./routes/Alerts";
 import AuditPage from "./routes/Audit";
 import CompliancePage from "./routes/Compliance";
 import Home from "./routes/Home";
+import Landing from "./routes/Landing";
 import Login from "./routes/Login";
 import RiskPage from "./routes/Risk";
 import SafetyPage from "./routes/Safety";
@@ -32,7 +33,7 @@ const qc = new QueryClient({
 
 function RootRedirect() {
   const { me } = useAuth();
-  return <Navigate to={me ? ROLE_HOME[me.role] : "/login"} replace />;
+  return <Navigate to={me ? ROLE_HOME[me.role] : "/landing"} replace />;
 }
 
 createRoot(document.getElementById("root")!).render(
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <BrowserRouter>
             <Routes>
+              <Route path="/landing" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route
                 element={

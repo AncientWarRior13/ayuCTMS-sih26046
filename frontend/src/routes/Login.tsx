@@ -2,15 +2,16 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { ROLE_HOME, ROLE_LABEL, useAuth, type Role } from "../auth/AuthContext";
 import { Button, ErrorBox, Field } from "../components/ui";
+import { ShieldCheck, Activity, KeyRound, Sparkles, CheckCircle2 } from "lucide-react";
 
-const DEMO: [Role, string][] = [
-  ["PI", "pi@demo.test"],
-  ["COORDINATOR", "coord@demo.test"],
-  ["MONITOR", "monitor@demo.test"],
-  ["IEC", "iec@demo.test"],
-  ["PV", "pv@demo.test"],
-  ["ADMIN", "admin@demo.test"],
-  ["REGULATOR", "regulator@demo.test"],
+const DEMO: [Role, string, string][] = [
+  ["PI", "pi@demo.test", "Principal Investigator"],
+  ["COORDINATOR", "coord@demo.test", "Clinical Coordinator"],
+  ["MONITOR", "monitor@demo.test", "Trial Monitor"],
+  ["IEC", "iec@demo.test", "Ethics Committee"],
+  ["PV", "pv@demo.test", "Pharmacovigilance Officer"],
+  ["ADMIN", "admin@demo.test", "System Administrator"],
+  ["REGULATOR", "regulator@demo.test", "Auditor / Regulator (Read-Only)"],
 ];
 const DEMO_PASSWORD = "Demo@12345";
 
@@ -26,7 +27,10 @@ export default function Login() {
 
   if (me) return <Navigate to={ROLE_HOME[me.role]} replace />;
 
-  async function submit(e?: FormEvent, creds?: { email: string; password: string }) {
+  async function submit(
+    e?: FormEvent,
+    creds?: { email: string; password: string },
+  ) {
     e?.preventDefault();
     setBusy(true);
     setErr(null);
@@ -42,51 +46,186 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-brand-50 via-white to-emerald-50 p-4">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl md:grid-cols-2">
-        <div className="hidden flex-col justify-between bg-brand-800 p-8 text-brand-50 md:flex">
+    <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-[#0A0F0D]">
+      {/* ── Cinematic Botanical Particle Glow Background ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Ambient radial glows */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-[var(--brand)]/10 blur-[120px]" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-[var(--accent-brass)]/10 blur-[120px]" />
+
+        {/* Botanical Mandala / Hash Rings Pattern */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-10 animate-pulse-subtle"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <radialGradient id="ringGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="50%" cy="50%" r="420" stroke="var(--brand)" strokeWidth="1" strokeDasharray="6 6" fill="none" />
+          <circle cx="50%" cy="50%" r="300" stroke="var(--accent-brass)" strokeWidth="1" strokeDasharray="3 9" fill="none" />
+          <circle cx="50%" cy="50%" r="180" stroke="var(--brand)" strokeWidth="1" fill="none" />
+        </svg>
+      </div>
+
+      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)]/95 shadow-2xl backdrop-blur-xl overflow-hidden">
+        {/* ── Left Cinematic Editorial Column ── */}
+        <div className="lg:col-span-6 p-8 lg:p-12 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[var(--border)] bg-gradient-to-b from-[var(--surface-2)]/80 to-[var(--surface-1)]">
           <div>
-            <img src="/favicon.svg" alt="" className="h-10 w-10" />
-            <h1 className="mt-4 text-2xl font-bold">AyuCTMS</h1>
-            <p className="mt-1 text-sm text-brand-100">AIIA Clinical Trials Dashboard</p>
+            {/* Ministry & Institute Badges */}
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[var(--brand)]/15 text-[var(--brand-text)] border border-[var(--brand)]/30">
+                Ministry of Ayush
+              </span>
+              <span className="font-mono text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[var(--accent-brass)]/15 text-[var(--accent-brass)] border border-[var(--accent-brass)]/30">
+                AIIA · SIH 26046
+              </span>
+            </div>
+
+            <div className="mt-8 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[#0A0F0D] p-2 flex items-center justify-center shadow-[0_0_16px_var(--brand-glow)]">
+                <svg viewBox="0 0 24 24" className="w-full h-full text-white fill-none stroke-current stroke-2">
+                  <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z" />
+                  <path d="M11 3v17" />
+                  <circle cx="11" cy="13" r="2" fill="currentColor" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--text)]">
+                  AyuCTMS
+                </h1>
+                <p className="text-xs font-mono text-[var(--text-muted)] tracking-wide">
+                  Clinical Trial Management & Safety Command
+                </p>
+              </div>
+            </div>
+
+            {/* Core Differentiators */}
+            <div className="mt-8 space-y-4">
+              <div className="flex items-start gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-2)]/40">
+                <ShieldCheck size={18} className="text-[var(--brand)] shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-xs font-semibold text-[var(--text)]">
+                    SHA-256 Hash-Chained Audit Trail
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)] leading-relaxed mt-0.5">
+                    Append-only cryptographic integrity verification with external Merkle checkpoints.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-2)]/40">
+                <Activity size={18} className="text-[var(--accent-brass)] shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-xs font-semibold text-[var(--text)]">
+                    Pharmacovigilance & Herb-Drug Engine
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)] leading-relaxed mt-0.5">
+                    Live 1Hz regulatory countdowns, Evans PRR/ROR signal detection, and Ayurvedic interaction warnings.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <ul className="space-y-2 text-sm text-brand-100">
-            <li>Study lifecycle with CTRI and ethics guards</li>
-            <li>Pharmacovigilance with live SAE reporting clocks</li>
-            <li>Tamper-evident, hash-chained audit trail</li>
-            <li>FHIR R4 and CDISC SDTM exports</li>
-          </ul>
-          <p className="text-xs text-brand-200">Ministry of Ayush - All India Institute of Ayurveda</p>
+
+          <div className="mt-8 pt-4 border-t border-[var(--border)] text-[10px] text-[var(--text-faint)] flex items-center justify-between font-mono">
+            <span>STRICT ALCOA+ COMPLIANCE</span>
+            <span>FHIR R4 & CDISC SDTM</span>
+          </div>
         </div>
-        <div className="p-8">
-          <h2 className="text-xl font-semibold">Sign in</h2>
-          <form className="mt-6 space-y-4" onSubmit={submit}>
-            <Field label="Email">
-              <input className="input" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Field>
-            <Field label="Password">
-              <input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-            </Field>
-            {needTotp && (
-              <Field label="Authenticator code">
-                <input className="input" inputMode="numeric" value={totp} onChange={(e) => setTotp(e.target.value)} />
+
+        {/* ── Right Form & Role Card Picker ── */}
+        <div className="lg:col-span-6 p-8 lg:p-10 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl font-bold text-[var(--text)]">
+                Access Gateway
+              </h2>
+              <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                Secure Sign-in
+              </span>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={submit}>
+              <Field label="Operator Email">
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="operator@aiia.gov.in"
+                  autoComplete="username"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </Field>
-            )}
-            <ErrorBox error={err} />
-            <Button className="w-full" disabled={busy}>{busy ? "Signing in..." : "Sign in"}</Button>
-          </form>
-          <div className="mt-8">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Demo accounts (synthetic data)</p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+
+              <Field label="Password">
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="••••••••••••"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Field>
+
+              {needTotp && (
+                <Field label="2FA Authenticator Token (TOTP)">
+                  <div className="relative">
+                    <input
+                      className="input pl-8 font-mono text-center tracking-widest"
+                      inputMode="numeric"
+                      placeholder="000 000"
+                      maxLength={6}
+                      value={totp}
+                      onChange={(e) => setTotp(e.target.value)}
+                    />
+                    <KeyRound size={15} className="absolute left-2.5 top-3 text-[var(--brand)]" />
+                  </div>
+                </Field>
+              )}
+
+              <ErrorBox error={err} />
+
+              <Button className="w-full" disabled={busy} size="lg">
+                {busy ? "Authorizing Identity..." : "Authenticate Session"}
+              </Button>
+            </form>
+          </div>
+
+          {/* Quick Demo Access Roles */}
+          <div className="mt-8 pt-6 border-t border-[var(--border)]">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                1-Click Role Exploration (Synthetic Data)
+              </span>
+              <Sparkles size={13} className="text-[var(--accent-brass)]" />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {DEMO.map(([role, e]) => (
                 <button
                   key={role}
+                  type="button"
                   disabled={busy}
-                  onClick={() => submit(undefined, { email: e, password: DEMO_PASSWORD })}
-                  className="rounded-md border border-slate-200 px-2 py-1.5 text-left text-xs hover:border-brand-600 hover:bg-brand-50"
+                  onClick={() =>
+                    submit(undefined, { email: e, password: DEMO_PASSWORD })
+                  }
+                  className="p-2 text-left rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)]/60 hover:bg-[var(--surface-3)] hover:border-[var(--brand)]/50 transition-all duration-150 group"
                 >
-                  <span className="block font-medium text-slate-800">{ROLE_LABEL[role]}</span>
-                  <span className="text-slate-500">{e}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-[var(--text)] group-hover:text-[var(--brand)]">
+                      {ROLE_LABEL[role]}
+                    </span>
+                    <CheckCircle2 size={11} className="text-[var(--text-faint)] group-hover:text-[var(--brand)]" />
+                  </div>
+                  <div className="text-[10px] text-[var(--text-muted)] truncate mt-0.5">
+                    {e}
+                  </div>
                 </button>
               ))}
             </div>
