@@ -24,7 +24,6 @@ export function ChainMesh() {
 
   const layouts = useMemo(() => computeBlockLayouts(), []);
   const hexGeometry = useMemo(() => createHexPrismGeometry(), []);
-  const edgesGeometry = useMemo(() => new THREE.EdgesGeometry(hexGeometry), [hexGeometry]);
 
   const [shockwavePos, setShockwavePos] = useState<THREE.Vector3 | null>(null);
 
@@ -193,10 +192,10 @@ export function ChainMesh() {
       {/* Brass Edge Highlights */}
       <instancedMesh
         ref={edgesRef}
-        args={[edgesGeometry, undefined, BLOCK_COUNT]}
+        args={[hexGeometry, undefined, BLOCK_COUNT]}
         raycast={() => null}
       >
-        <lineBasicMaterial color="#C8A45C" transparent opacity={0.7} />
+        <meshBasicMaterial color="#C8A45C" wireframe transparent opacity={0.65} />
       </instancedMesh>
 
       {/* Tamper Shockwave Ring */}

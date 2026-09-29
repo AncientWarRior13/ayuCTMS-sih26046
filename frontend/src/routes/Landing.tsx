@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import {
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import ChainScene from "../components/landing/three/ChainScene";
 import { SceneProvider, useSceneProgress } from "../components/landing/three/SceneContext";
+import { ScenePoster } from "../components/landing/three/ScenePoster";
 import { STATIONS } from "../components/landing/three/types";
 
 // Unfold 3 Problem -> Solution statements
@@ -137,8 +138,16 @@ function LandingContent() {
 
   return (
     <div className="relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
-      {/* 3D WebGL Background Canvas */}
-      <ChainScene />
+      {/* 3D WebGL Background Canvas with Poster Fallback */}
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-40">
+            <ScenePoster className="w-full h-full" />
+          </div>
+        }
+      >
+        <ChainScene />
+      </Suspense>
 
       {/* Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-[#22302A]/60 bg-[#0A0F0D]/70 backdrop-blur-md">
@@ -183,13 +192,13 @@ function LandingContent() {
       {/* ============================================================ */}
       <div
         ref={journeyRef}
-        className={isMobileOrReduced ? "relative" : "relative h-[550vh]"}
+        className={isMobileOrReduced ? "relative z-10" : "relative z-10 h-[550vh]"}
       >
         <div
           className={
             isMobileOrReduced
               ? "relative pt-24 px-6 space-y-24"
-              : "sticky top-0 h-screen w-full overflow-hidden pointer-events-none"
+              : "sticky top-0 h-screen w-full overflow-hidden pointer-events-none z-10"
           }
         >
           {/* ========================================================== */}
