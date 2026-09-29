@@ -24,6 +24,7 @@ import NotFound from "./routes/NotFound";
 // Lazy-loaded public entry routes
 const Landing = lazy(() => import("./routes/Landing"));
 const Login = lazy(() => import("./routes/Login"));
+const DevKit = lazy(() => import("./routes/DevKit"));
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,14 @@ createRoot(document.getElementById("root")!).render(
                 element={
                   <PageSuspense>
                     <Login />
+                  </PageSuspense>
+                }
+              />
+              <Route
+                path="/__kit"
+                element={
+                  <PageSuspense>
+                    <DevKit />
                   </PageSuspense>
                 }
               />

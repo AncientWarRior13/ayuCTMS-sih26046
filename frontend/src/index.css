@@ -1,4 +1,12 @@
 @import "tailwindcss";
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/600.css";
+@import "@fontsource/noto-sans-devanagari/400.css";
+@import "@fontsource/noto-sans-devanagari/600.css";
 
 :root {
   /* Default: Ink Dark Mode */
@@ -55,7 +63,7 @@ html.light {
   --bg: #F6F2E9;
   --surface-1: #FFFDF7;
   --surface-2: #F0EBDD;
-  --surface-3: #E6DFCEx;
+  --surface-3: #E6DFCE;
   --border: #E4DCCB;
   --border-subtle: #ECE5D7;
   --border-highlight: rgba(0, 0, 0, 0.05);
