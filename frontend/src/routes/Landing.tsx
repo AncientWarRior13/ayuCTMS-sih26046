@@ -11,13 +11,11 @@ import {
   Eye,
   FileCheck,
   Fingerprint,
-  Layers,
   Lock,
   RefreshCw,
   Shield,
   ShieldAlert,
   Sparkles,
-  Users,
 } from "lucide-react";
 import ChainScene from "../components/landing/three/ChainScene";
 import { SceneProvider, useSceneProgress } from "../components/landing/three/SceneContext";

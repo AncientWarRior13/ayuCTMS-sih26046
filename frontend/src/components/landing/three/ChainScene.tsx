@@ -24,7 +24,7 @@ class WebGLErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError) {
-      return this.fallback;
+      return this.props.fallback;
     }
     return this.props.children;
   }

@@ -1,5 +1,3 @@
-import React from "react";
-
 export function ScenePoster({ className = "" }: { className?: string }) {
   return (
     <div

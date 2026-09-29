@@ -15,7 +15,6 @@ function createHexPrismGeometry() {
 const COLOR_INK = new THREE.Color("#101815");
 const COLOR_TEAL = new THREE.Color("#2FB39A");
 const COLOR_DANGER = new THREE.Color("#E5484D");
-const COLOR_BRASS = new THREE.Color("#C8A45C");
 
 export function ChainMesh() {
   const { progress, tamperState, onTamper } = useSceneProgress();
@@ -36,8 +35,6 @@ export function ChainMesh() {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const currentPos = useMemo(() => new THREE.Vector3(), []);
   const currentQuat = useMemo(() => new THREE.Quaternion(), []);
-  const targetPos = useMemo(() => new THREE.Vector3(), []);
-  const targetQuat = useMemo(() => new THREE.Quaternion(), []);
   const tempColor = useMemo(() => new THREE.Color(), []);
 
   // Initialize instance colors once

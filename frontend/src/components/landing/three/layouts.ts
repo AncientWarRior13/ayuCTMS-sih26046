@@ -21,7 +21,6 @@ export function computeBlockLayouts(): BlockLayouts {
 
   // Temporary objects to avoid GC
   const dummy = new THREE.Object3D();
-  const up = new THREE.Vector3(0, 1, 0);
 
   // 1. Lotus Layout (4 concentric rings: 6 + 12 + 18 + 24 = 60)
   const rings = [
