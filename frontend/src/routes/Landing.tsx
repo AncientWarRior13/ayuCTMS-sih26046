@@ -68,21 +68,69 @@ function StationReadout({ station }: { station: (typeof STATIONS)[number] }) {
   );
 }
 
-// Section transition helper: hide-out 150ms, show-in 200ms with 200ms delay
-const getSectionStyle = (isActive: boolean): React.CSSProperties => ({
-  transition: isActive
-    ? "opacity 200ms cubic-bezier(0.16, 1, 0.3, 1) 200ms, transform 200ms cubic-bezier(0.16, 1, 0.3, 1) 200ms"
-    : "opacity 150ms cubic-bezier(0.7, 0, 0.84, 0) 0ms, transform 150ms cubic-bezier(0.7, 0, 0.84, 0) 0ms",
-  opacity: isActive ? 1 : 0,
-  transform: isActive ? "translateY(0px)" : "translateY(-10px)",
-  pointerEvents: isActive ? "auto" : "none",
-});
+// Smooth scroll-driven section styles: smoothly interpolates opacity and translateY directly with user scroll
+function getScrollSectionStyle(
+  p: number,
+  enterStart: number,
+  enterEnd: number,
+  exitStart: number,
+  exitEnd: number
+): React.CSSProperties {
+  if (p < enterStart) {
+    return {
+      opacity: 0,
+      transform: "translateY(24px)",
+      pointerEvents: "none",
+      visibility: "hidden",
+      transition: "opacity 120ms cubic-bezier(0.16, 1, 0.3, 1), transform 120ms cubic-bezier(0.16, 1, 0.3, 1)",
+    };
+  }
+  if (p < enterEnd) {
+    const linear = (p - enterStart) / (enterEnd - enterStart);
+    // 5th-degree smootherstep for silk-smooth acceleration: 6t^5 - 15t^4 + 10t^3
+    const t = linear * linear * linear * (linear * (linear * 6 - 15) + 10);
+    return {
+      opacity: Math.max(0, Math.min(1, t)),
+      transform: `translateY(${(1 - t) * 24}px)`,
+      pointerEvents: "none",
+      visibility: t > 0.01 ? "visible" : "hidden",
+      transition: "opacity 80ms ease-out, transform 80ms ease-out",
+    };
+  }
+  if (p <= exitStart) {
+    return {
+      opacity: 1,
+      transform: "translateY(0px)",
+      pointerEvents: "none",
+      visibility: "visible",
+      transition: "opacity 80ms ease-out, transform 80ms ease-out",
+    };
+  }
+  if (p < exitEnd) {
+    const linear = (p - exitStart) / (exitEnd - exitStart);
+    // 5th-degree smootherstep for silk-smooth deceleration
+    const t = linear * linear * linear * (linear * (linear * 6 - 15) + 10);
+    return {
+      opacity: Math.max(0, Math.min(1, 1 - t)),
+      transform: `translateY(${-t * 24}px)`,
+      pointerEvents: "none",
+      visibility: (1 - t) > 0.01 ? "visible" : "hidden",
+      transition: "opacity 80ms ease-out, transform 80ms ease-out",
+    };
+  }
+  return {
+    opacity: 0,
+    transform: "translateY(-24px)",
+    pointerEvents: "none",
+    visibility: "hidden",
+    transition: "opacity 120ms cubic-bezier(0.16, 1, 0.3, 1), transform 120ms cubic-bezier(0.16, 1, 0.3, 1)",
+  };
+}
 
 // Inner Landing Content that consumes useSceneProgress
 function LandingContent() {
   const {
     setScrollTarget,
-    activeSection,
     activeStationIndex,
     tamperState,
     onRestore,
@@ -115,6 +163,9 @@ function LandingContent() {
 
     lenis.on("scroll", handleLenisScroll);
 
+    // Initial measurement so progress is immediately accurate
+    handleLenisScroll();
+
     function raf(time: number) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -124,6 +175,7 @@ function LandingContent() {
     // Observe document and spec sections so Lenis recalculates scroll height
     const resizeObserver = new ResizeObserver(() => {
       lenis.resize();
+      handleLenisScroll();
     });
     if (journeyRef.current) resizeObserver.observe(journeyRef.current);
     const specEl = document.getElementById("spec");
@@ -146,10 +198,20 @@ function LandingContent() {
 
   return (
     <div className="landing-root relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
+      {/* Deep Sanctuary Atmospheric Radial Glows */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Central Vedic Emerald Lotus Bloom */}
+        <div className="absolute top-1/2 left-[62%] -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full bg-[radial-gradient(circle,rgba(47,179,154,0.11)_0%,rgba(200,164,92,0.05)_42%,transparent_72%)] blur-2xl" />
+        {/* Upper Right Warm Gold Haze */}
+        <div className="absolute -top-[10%] -right-[5%] w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(200,164,92,0.07)_0%,transparent_65%)] blur-3xl" />
+        {/* Bottom Left Deep Emerald Foundation */}
+        <div className="absolute -bottom-[15%] -left-[10%] w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle,rgba(30,68,57,0.14)_0%,transparent_60%)] blur-3xl" />
+      </div>
+
       {/* 3D WebGL Background Canvas with Poster Fallback */}
       <Suspense
         fallback={
-          <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-40">
+          <div className="fixed inset-0 z-0 flex items-center justify-center opacity-80">
             <ScenePoster className="w-full h-full" />
           </div>
         }
@@ -217,10 +279,11 @@ function LandingContent() {
           }
         >
           {/* ========================================================== */}
-          {/* HERO SECTION (Progress 0.00 - 0.12)                         */}
+          {/* HERO SECTION (Progress 0.00 - 0.11)                         */}
           {/* ========================================================== */}
           <section
-            className={`absolute inset-0 flex items-center pointer-events-none transition-opacity duration-500 ${isMobileOrReduced || progress <= 0.14 ? "opacity-100" : "opacity-0"}`}
+            style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.0, 0.0, 0.05, 0.11)}
+            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center pointer-events-none"}
           >
             <div className="mx-auto w-full max-w-7xl px-6 pt-16">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -287,14 +350,14 @@ function LandingContent() {
           </section>
 
           {/* ========================================================== */}
-          {/* UNFOLD SECTION (Progress 0.14 - 0.38)                       */}
+          {/* UNFOLD SECTION (Progress 0.13 - 0.38)                       */}
           {/* ========================================================== */}
           <section
-            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "unfold")}
-            className="absolute inset-0 flex items-center"
+            style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.13, 0.19, 0.32, 0.38)}
+            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center pointer-events-none"}
           >
             <div className="mx-auto w-full max-w-7xl px-6">
-              <div className="w-full lg:max-w-[45%] space-y-8">
+              <div className="w-full lg:max-w-[45%] space-y-8 pointer-events-auto">
                 <div>
                   <div className="font-data text-[13px] uppercase tracking-wider text-[#C8A45C] mb-3">
                     The shift
@@ -347,17 +410,17 @@ function LandingContent() {
           </section>
 
           {/* ========================================================== */}
-          {/* HOW IT WORKS SECTION (Progress 0.40 - 0.85)                 */}
+          {/* HOW IT WORKS SECTION (Progress 0.40 - 0.86)                 */}
           {/* Left rail with 5 stations; equal scroll distance for each  */}
           {/* ========================================================== */}
           <section
-            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "stations")}
-            className="absolute inset-0 flex items-center"
+            style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.4, 0.45, 0.81, 0.86)}
+            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center pointer-events-none"}
           >
             <div className="mx-auto w-full max-w-7xl px-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 {/* Left Rail: 5 Stations with AA contrast for inactive rows */}
-                <div className="lg:col-span-5 space-y-3">
+                <div className="lg:col-span-5 space-y-3 pointer-events-auto">
                   <div className="text-[13px] font-mono text-[#C8A45C] uppercase tracking-wider mb-2">
                     Station {activeStationIndex + 1} of 5 · Clinical Data Pipeline
                   </div>
@@ -412,14 +475,14 @@ function LandingContent() {
           </section>
 
           {/* ========================================================== */}
-          {/* FINAL CTA SECTION (Progress 0.85 - 1.00)                    */}
+          {/* FINAL CTA SECTION (Progress 0.87 - 1.00)                    */}
           {/* Flat surfaces, clean typography without stray apostrophe    */}
           {/* ========================================================== */}
           <section
-            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "final")}
-            className="absolute inset-0 flex items-center justify-center text-center"
+            style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.87, 0.93, 1.0, 1.0)}
+            className={isMobileOrReduced ? "relative w-full text-center" : "absolute inset-0 flex items-center justify-center text-center pointer-events-none"}
           >
-            <div className="max-w-2xl px-6 space-y-6">
+            <div className="max-w-2xl px-6 space-y-6 pointer-events-auto">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#2FB39A]/50 bg-[#101815] px-4 py-1.5 text-[13px] text-[#39C8AD]">
                 <CheckCircle2 className="w-4 h-4 text-[#2FB39A]" />
                 All 60 Cryptographic Blocks Verified · Hash Chain Intact

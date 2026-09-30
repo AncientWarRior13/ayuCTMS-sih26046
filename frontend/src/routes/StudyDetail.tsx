@@ -527,6 +527,9 @@ function Exports({ s }: { s: any }) {
     { path: `/export/fhir/study/${s.id}`, name: "fhir.json", title: full ? "FHIR R4 Bundle" : "FHIR R4 Bundle (safety only)", desc: full ? "ResearchStudy, ResearchSubject, Patient (pseudonymised) and AdverseEvent resources, validated before download." : "ResearchStudy and AdverseEvent resources.", icon: FileJson, show: true },
     { path: `/export/sdtm/study/${s.id}/DM`, name: "dm.csv", title: "SDTM DM (Demographics)", desc: "STUDYID, USUBJID, SITEID, AGE, SEX, ARM, RFSTDTC using CDISC controlled terminology.", icon: Download, show: full },
     { path: `/export/sdtm/study/${s.id}/AE`, name: "ae.csv", title: "SDTM AE (Adverse Events)", desc: "AETERM, AEDECOD, AESEV, AESER, AEREL, AEOUT per the mapping in docs/05.", icon: Download, show: true },
+    { path: `/export/adam/study/${s.id}/ADSL`, name: "adsl.csv", title: "ADaM ADSL (Subject-Level Analysis)", desc: "CDISC Analysis Data Model with Ayush extensions: PRAKRITI, AGNITYPE, SAFFL, ITTFL flags.", icon: Download, show: full },
+    { path: `/export/adam/study/${s.id}/ADAE`, name: "adae.csv", title: "ADaM ADAE (Adverse Events Analysis)", desc: "Treatment-emergent flags (TRTEMFL), MedDRA PT/SOC coding, and toxicity grading (AETOXGR).", icon: Download, show: true },
+    { path: `/export/cdisc/define-xml/study/${s.id}`, name: "define.xml", title: "CDISC Define-XML 2.0", desc: "Machine-readable clinical dataset definition conforming to CDISC Define-XML Schema 2.0.", icon: FileJson, show: full },
   ];
   return (
     <div className="grid gap-4 md:grid-cols-3">

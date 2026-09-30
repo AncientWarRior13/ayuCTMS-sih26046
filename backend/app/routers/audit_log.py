@@ -93,3 +93,37 @@ def verify_checkpoint(cid: int, user: User = Depends(require("audit.verify")), c
     root = audit.merkle_root(hashes)
     return {"checkpoint_id": cid, "expected_root": c["merkle_root"], "recomputed_root": root,
             "matches": root == c["merkle_root"] and len(hashes) == c["row_count"]}
+
+
+@router.get("/merkle/public-proof")
+def public_merkle_proof(conn=Depends(db)):
+    """Publicly verifiable Merkle checkpoint proof for independent audit verification.
+    Provides sovereign regulators and third parties mathematical certainty of ledger integrity."""
+    cp = one(conn, "SELECT * FROM audit_checkpoints ORDER BY id DESC LIMIT 1")
+    if not cp:
+        # Generate on-the-fly root if no checkpoint recorded yet
+        hashes = [r["row_hash"] for r in rows(conn, "SELECT row_hash FROM audit_log ORDER BY id")]
+        last_id = one(conn, "SELECT max(id) AS m FROM audit_log")["m"] or 0
+        root = audit.merkle_root(hashes) if hashes else "GENESIS"
+        return {
+            "status": "LIVE_UNCHECKPOINTED",
+            "root_hash": root,
+            "total_blocks": len(hashes),
+            "last_block_id": last_id,
+            "epoch_timestamp": None,
+            "is_externally_anchored": False
+        }
+
+    return {
+        "status": "ANCHORED" if cp["anchored_at"] else "VERIFIED_INTERNAL",
+        "checkpoint_id": cp["id"],
+        "root_hash": cp["merkle_root"],
+        "total_blocks": cp["row_count"],
+        "last_block_id": cp["last_audit_id"],
+        "created_at": cp["created_at"].isoformat() if cp["created_at"] else None,
+        "anchor_url": cp["anchor_url"],
+        "anchored_at": cp["anchored_at"].isoformat() if cp["anchored_at"] else None,
+        "is_externally_anchored": bool(cp["anchored_at"]),
+        "verification_guide": "Compute Merkle tree over all SHA-256 row_hash elements up to last_block_id. Root must match root_hash."
+    }
+

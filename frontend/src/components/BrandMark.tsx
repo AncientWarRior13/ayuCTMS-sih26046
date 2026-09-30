@@ -4,7 +4,6 @@ export interface BrandMarkProps {
   size?: number;
   className?: string;
   variant?: "badge" | "glyph";
-  idPrefix?: string;
 }
 
 /**
@@ -15,9 +14,7 @@ export function BrandMark({
   size = 32,
   className,
   variant = "badge",
-  idPrefix = "ayu",
 }: BrandMarkProps) {
-  const gradId = `${idPrefix}-brand-grad`;
 
   if (variant === "glyph") {
     return (
@@ -44,45 +41,37 @@ export function BrandMark({
     <div
       style={{ width: size, height: size }}
       className={clsx(
-        "relative rounded-xl flex items-center justify-center shrink-0 select-none",
-        "bg-gradient-to-br from-[#39C8AD] via-[#2FB39A] to-[#0A1410]",
-        "border border-[#39C8AD]/50 shadow-[0_0_16px_rgba(47,179,154,0.3)]",
+        "relative rounded-xl flex items-center justify-center shrink-0 select-none overflow-hidden",
+        "bg-[#0A0F0D]",
+        "shadow-[0_0_14px_rgba(47,179,154,0.45)]",
         className,
       )}
       aria-hidden="true"
     >
-      <svg
-        viewBox="0 0 40 40"
-        fill="none"
-        className="w-[82%] h-[82%]"
-      >
-        <defs>
-          <radialGradient id={gradId} cx="35%" cy="30%" r="80%">
-            <stop offset="0%" stopColor="#39C8AD" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#0B1512" stopOpacity="0.2" />
-          </radialGradient>
-        </defs>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(47,179,154,0.18)_0%,transparent_70%)]" />
 
-        {/* Botanical Leaf-Flame Outline */}
-        <path
-          d="M20 32C20 32 9 23.5 9 14.5C9 8 14 3.5 20 3.5C26 3.5 31 8 31 14.5C31 23.5 20 32 20 32Z"
-          stroke="#FFFFFF"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
+      <svg viewBox="0 0 40 40" fill="none" className="w-[88%] h-[88%] relative z-10">
+        {/* Outer gold ring */}
+        <circle cx="20" cy="20" r="17" stroke="#C8A45C" strokeWidth="1.6"/>
 
-        {/* Central Vertical Vein */}
-        <path
-          d="M20 3.5V32"
-          stroke="#FFFFFF"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
+        {/* 8 outer gold diamond petals + teal tip dot */}
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+          <g key={deg} transform={`rotate(${deg} 20 20)`}>
+            <path d="M20 3 L21.2 9 L20 13 L18.8 9Z" fill="#101815" stroke="#C8A45C" strokeWidth="0.8"/>
+            <circle cx="20" cy="3.5" r="1.2" fill="#2FB39A"/>
+          </g>
+        ))}
 
-        {/* Central Seed / Flame Node */}
-        <circle cx="20" cy="16" r="2.8" fill="#FFFFFF" />
+        {/* 8 inner teal petals, offset 22.5° */}
+        {[22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5].map((deg) => (
+          <g key={deg} transform={`rotate(${deg} 20 20)`}>
+            <path d="M20 10 L21 14 L20 16.5 L19 14Z" fill="#1D2A24" stroke="#2FB39A" strokeWidth="0.9"/>
+          </g>
+        ))}
+
+        {/* Central anchor */}
+        <circle cx="20" cy="20" r="3.5" fill="#101815" stroke="#C8A45C" strokeWidth="1.1"/>
+        <circle cx="20" cy="20" r="1.6" fill="#2FB39A"/>
       </svg>
     </div>
   );

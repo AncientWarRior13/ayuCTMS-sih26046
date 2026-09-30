@@ -23,11 +23,12 @@ export function computeBlockLayouts(): BlockLayouts {
   const dummy = new THREE.Object3D();
 
   // 1. Lotus Layout (4 concentric rings: 6 + 12 + 18 + 24 = 60)
+  // Adjusted radii and elevated inner crown so inner blocks (1, 2...) are uncrowded and cleanly clickable
   const rings = [
-    { count: 6, radius: 0.5, y: 0.12, tilt: 0.15 },
-    { count: 12, radius: 1.35, y: 0.22, tilt: 0.38 },
-    { count: 18, radius: 2.25, y: 0.1, tilt: 0.65 },
-    { count: 24, radius: 3.15, y: -0.15, tilt: 0.95 },
+    { count: 6, radius: 0.72, y: 0.24, tilt: 0.12 },
+    { count: 12, radius: 1.50, y: 0.18, tilt: 0.35 },
+    { count: 18, radius: 2.32, y: 0.10, tilt: 0.60 },
+    { count: 24, radius: 3.00, y: 0.02, tilt: 0.80 },
   ];
 
   let currentBlock = 0;
@@ -68,14 +69,15 @@ export function computeBlockLayouts(): BlockLayouts {
     chainQuat.push(dummy.quaternion.clone());
   }
 
-  // 3. Corridor Layout (Helix along -Z with radius 1.4)
-  const helixRadius = 1.4;
-  const helixPitch = 0.82;
+  // 3. Corridor Layout (Expanded Helix along -Z to fill the right viewport)
+  const helixCenterX = 0.35;
+  const helixRadius = 1.85;
+  const helixPitch = 0.84;
   const angleStep = 0.38;
 
   for (let i = 0; i < BLOCK_COUNT; i++) {
     const angle = i * angleStep;
-    const hx = helixRadius * Math.cos(angle);
+    const hx = helixCenterX + helixRadius * Math.cos(angle);
     const hy = helixRadius * Math.sin(angle);
     const hz = -i * helixPitch + 2.0;
 
@@ -83,7 +85,7 @@ export function computeBlockLayouts(): BlockLayouts {
 
     dummy.position.set(hx, hy, hz);
     // Orient facing the helix axis
-    dummy.lookAt(0, 0, hz);
+    dummy.lookAt(helixCenterX, 0, hz);
     dummy.rotateY(Math.PI / 2);
     corridorQuat.push(dummy.quaternion.clone());
   }

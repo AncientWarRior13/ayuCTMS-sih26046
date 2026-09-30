@@ -47,6 +47,12 @@ PERMISSIONS: dict[str, set[str]] = {
     "audit.read": {ADMIN, REG},
     "audit.verify": {ADMIN, REG},
     "audit.checkpoint": {ADMIN},
+    # ayurvedic phenotyping
+    "phenotype.read": ALL,
+    "phenotype.write": {PI, COORD, PV, ADMIN},
+    # electronic signatures
+    "signature.sign": {PI, COORD, MONITOR, IEC, PV, ADMIN},
+    "signature.read": ALL,
     # interoperability
     "export.study": {PI, ADMIN, REG},  # PI: own studies
     "export.safety": {PI, PV, ADMIN, REG},

@@ -16,6 +16,8 @@ import {
   Modal,
   useToast,
 } from "../components/ui";
+import { AyurvedicPhenotypeSection } from "../components/clinical/AyurvedicPhenotypeCard";
+import { ElectronicSignatureModal, EntitySignaturesList } from "../components/signatures/ElectronicSignatureModal";
 
 const VISIT_TONE: Record<string, "gray" | "green" | "red" | "amber"> = {
   PLANNED: "gray",
@@ -154,9 +156,10 @@ function VisitRow({
 }) {
   const qc = useQueryClient();
   const toast = useToast();
-  const { can } = useAuth();
+  const { me, can } = useAuth();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [signEntry, setSignEntry] = useState<any>(null);
   const { data: templates = [] } = useQuery<any[]>({
     queryKey: ["crf-templates", study.id],
     queryFn: () => get(`/studies/${study.id}/crf-templates`),
@@ -222,6 +225,14 @@ function VisitRow({
                         </span>
                       ))}
                     </div>
+                    <div className="mt-2.5 pt-2 border-t border-[#22302A]">
+                      <EntitySignaturesList
+                        entityType="CRF_ENTRY"
+                        entityId={e.id}
+                        canSign={(can("signature.sign") || me?.role === "PI" || me?.role === "COORDINATOR" || me?.role === "ADMIN") && participant.status !== "WITHDRAWN"}
+                        onOpenSign={() => setSignEntry(e)}
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -273,6 +284,20 @@ function VisitRow({
               </form>
             )}
           </Can>
+
+          {signEntry && (
+            <ElectronicSignatureModal
+              open={!!signEntry}
+              onClose={() => setSignEntry(null)}
+              studyId={study.id}
+              entityType="CRF_ENTRY"
+              entityId={signEntry.id}
+              title={`Electronic Signature — ${v.visit_name} CRF Entry`}
+              onSigned={() => {
+                qc.invalidateQueries({ queryKey: ["signatures", "CRF_ENTRY", signEntry.id] });
+              }}
+            />
+          )}
         </div>
       )}
     </li>
@@ -288,6 +313,7 @@ export default function ParticipantDrawer({
   study: any;
   onClose: () => void;
 }) {
+  const { can } = useAuth();
   const qc = useQueryClient();
   const toast = useToast();
   const { data: p, isLoading } = useQuery<any>({
@@ -530,6 +556,15 @@ export default function ParticipantDrawer({
                 )}
               </section>
             </Can>
+
+            {/* Ayurvedic Phenotype CRF Section */}
+            {(can("phenotype.read") || can("participant.read")) && (
+              <AyurvedicPhenotypeSection
+                participant={p}
+                study={study}
+                visits={visits}
+              />
+            )}
 
             {/* Visits & CRFs */}
             <section className="space-y-3">

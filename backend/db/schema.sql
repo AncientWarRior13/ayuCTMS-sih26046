@@ -215,6 +215,37 @@ CREATE TABLE crf_entries (
   supersedes_id INT REFERENCES crf_entries(id)
 );
 
+-- ---------- Ayurvedic Phenotyping (NAMASTE / Ayush GCP aligned) ----------
+CREATE TYPE prakriti_dominant AS ENUM ('VATA','PITTA','KAPHA','VATA_PITTA','PITTA_KAPHA','VATA_KAPHA','SAMADOSHA');
+CREATE TYPE agni_type AS ENUM ('MANDA','TIKSHNA','VISHAMA','SAMA');
+CREATE TYPE koshtha_type AS ENUM ('MRIDU','MADHYAMA','KRURA');
+
+CREATE TABLE ayurvedic_phenotypes (
+  id SERIAL PRIMARY KEY,
+  participant_id INT NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
+  study_id INT NOT NULL REFERENCES studies(id) ON DELETE CASCADE,
+  visit_id INT REFERENCES visits(id) ON DELETE SET NULL,
+  prakriti prakriti_dominant NOT NULL,
+  prakriti_vata_pct INT NOT NULL CHECK (prakriti_vata_pct BETWEEN 0 AND 100),
+  prakriti_pitta_pct INT NOT NULL CHECK (prakriti_pitta_pct BETWEEN 0 AND 100),
+  prakriti_kapha_pct INT NOT NULL CHECK (prakriti_kapha_pct BETWEEN 0 AND 100),
+  vikriti_assessment TEXT,
+  vikriti_vata_pct INT CHECK (vikriti_vata_pct BETWEEN 0 AND 100),
+  vikriti_pitta_pct INT CHECK (vikriti_pitta_pct BETWEEN 0 AND 100),
+  vikriti_kapha_pct INT CHECK (vikriti_kapha_pct BETWEEN 0 AND 100),
+  agni agni_type NOT NULL,
+  koshtha koshtha_type NOT NULL,
+  dhatu_sarata JSONB,
+  namaste_morbidity_code TEXT,
+  icd11_tm2_code TEXT,
+  assessed_by INT REFERENCES users(id),
+  assessed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  version INT NOT NULL DEFAULT 1,
+  supersedes_id INT REFERENCES ayurvedic_phenotypes(id),
+  reason_for_change TEXT,
+  CHECK (prakriti_vata_pct + prakriti_pitta_pct + prakriti_kapha_pct = 100)
+);
+
 CREATE TABLE deviations (
   id SERIAL PRIMARY KEY,
   study_id INT NOT NULL REFERENCES studies(id) ON DELETE CASCADE,
@@ -344,6 +375,26 @@ CREATE TABLE data_provenance (
   licence_note TEXT,
   is_synthetic BOOLEAN NOT NULL DEFAULT TRUE,
   notes TEXT
+);
+
+-- ---------- Electronic Signatures (21 CFR Part 11 / GCP compliant) ----------
+CREATE TYPE signature_meaning AS ENUM ('AUTHORSHIP','APPROVAL','REVIEW','VERIFICATION');
+
+CREATE TABLE electronic_signatures (
+  id                  SERIAL PRIMARY KEY,
+  study_id            INT NOT NULL REFERENCES studies(id) ON DELETE CASCADE,
+  entity_type         TEXT NOT NULL,
+  entity_id           INT NOT NULL,
+  signer_id           INT NOT NULL REFERENCES users(id),
+  signer_name         TEXT NOT NULL,
+  signer_role         TEXT NOT NULL,
+  signature_meaning   signature_meaning NOT NULL,
+  reason              TEXT NOT NULL,
+  data_hash           TEXT NOT NULL,
+  signature_token     TEXT NOT NULL,
+  client_ip           INET,
+  signed_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  audit_id            BIGINT
 );
 
 -- ---------- Audit log (append-only, hash-chained) ----------
