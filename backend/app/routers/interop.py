@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse, Response
 
 from ..core.deps import User, db, require
 from ..core.permissions import allowed
-from ..services import audit, fhir, sdtm
+from ..services import adam, audit, define_xml, fhir, sdtm
 from ..services.common import study_or_404
 
 router = APIRouter(tags=["interoperability"])
@@ -42,6 +42,29 @@ def export_sdtm(sid: int, domain: str, user: User = Depends(require("export.safe
     audit.write(conn, user, "EXPORT", "study", sid, after={"format": f"SDTM-{domain}", "rows": body.count("\n") - 1})
     return Response(body, media_type="text/csv",
                     headers={"Content-Disposition": f'attachment; filename="{s["protocol_no"]}-{domain.lower()}.csv"'})
+
+
+@router.get("/export/adam/study/{sid}/{dataset}")
+def export_adam(sid: int, dataset: str, user: User = Depends(require("export.safety")), conn=Depends(db)):
+    ds = dataset.upper()
+    s = study_or_404(conn, sid)
+    _export_scope(user, s, ds)
+    try:
+        body = adam.to_csv(ds, conn, sid)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    audit.write(conn, user, "EXPORT", "study", sid, after={"format": f"ADaM-{ds}", "rows": body.count("\n") - 1})
+    return Response(body, media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{s["protocol_no"]}-{ds.lower()}.csv"'})
+
+
+@router.get("/export/cdisc/define-xml/study/{sid}")
+def export_define_xml(sid: int, user: User = Depends(require("export.study")), conn=Depends(db)):
+    s = study_or_404(conn, sid)
+    xml_content = define_xml.generate_define_xml(s["protocol_no"], s["title"])
+    audit.write(conn, user, "EXPORT", "study", sid, after={"format": "CDISC-Define-XML-2.0"})
+    return Response(xml_content, media_type="application/xml",
+                    headers={"Content-Disposition": f'attachment; filename="{s["protocol_no"]}-define.xml"'})
 
 
 @router.post("/import/fhir", status_code=202)
