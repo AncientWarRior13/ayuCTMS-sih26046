@@ -1,0 +1,29 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    # Runs every 14 minutes — Render free tier sleeps after 15 min of inactivity
+    - cron: "*/14 * * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  ping:
+    name: Ping Health Endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Wake up backend
+        run: |
+          echo "Pinging AyuCTMS backend at $(date -u)"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 5 \
+            https://ayuctms-backend.onrender.com/api/v1/health)
+          echo "Response status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "Backend is alive (HTTP $STATUS)"
+          else
+            echo "Backend returned HTTP $STATUS - may still be cold-starting"
+          fi
