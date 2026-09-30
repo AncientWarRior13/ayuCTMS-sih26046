@@ -2,7 +2,7 @@
 
 > **Next-Generation Multi-Site Protocol Management, Cryptographic Audit Provenance, Real-Time Pharmacovigilance & Interoperable Clinical Data Platform for the Ministry of Ayush & All India Institute of Ayurveda (AIIA)**
 
-[Live Web Application](https://ayuctms.vercel.app/) • [API Documentation (Swagger)](https://ayuctms-backend.onrender.com/api/v1/docs) • [Architectural Specifications](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/docs/02_ARCHITECTURE.md) • [Demonstration Video](https://github.com/AncientWarRior13/ayuCTMS-sih26046)
+[Live Web Application](https://ayu-ctms-sih26046.vercel.app/) • [API Documentation (Swagger)](https://ayuctms-backend.onrender.com/api/v1/docs) • [Architectural Specifications](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/docs/02-architecture-design.md) • [Demonstration Video](https://github.com/AncientWarRior13/ayuCTMS-sih26046)
 
 ---
 
@@ -157,7 +157,7 @@ ayuCTMS-sih26046/
 
 ## 🚀 Live Deployment & Environments
 
-- **Production Web Application (Vercel)**: [https://ayuctms.vercel.app](https://ayuctms.vercel.app/)
+- **Production Web Application (Vercel)**: [https://ayu-ctms-sih26046.vercel.app](https://ayu-ctms-sih26046.vercel.app/)
 - **Production Backend API (Render)**: [https://ayuctms-backend.onrender.com](https://ayuctms-backend.onrender.com/)
 - **Interactive Swagger Documentation**: [https://ayuctms-backend.onrender.com/api/v1/docs](https://ayuctms-backend.onrender.com/api/v1/docs)
 - **API Health Check**: [https://ayuctms-backend.onrender.com/api/v1/health](https://ayuctms-backend.onrender.com/api/v1/health)
@@ -176,7 +176,7 @@ ayuCTMS-sih26046/
 ```bash
 # Clone the repository
 git clone https://github.com/AncientWarRior13/ayuCTMS-sih26046.git
-cd ayuCTMS-sih26046/backend
+cd ayuCTMS-sih26046
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -240,13 +240,13 @@ The synthetic dataset includes pre-configured role-based test accounts with sing
 
 | SIH PS 26046 Benchmark | AyuCTMS Implementation & Compliance | Verified File Reference |
 | :--- | :--- | :--- |
-| **Ayurvedic Phenotyping CRF** | Full Prakriti, Vikriti, Agni, and Koshtha capture with longitudinal efficacy tracking. | [`backend/app/routers/participants.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/participants.py) |
-| **Herb-Drug Interaction Check** | Live Ayurvedic herb × allopathic drug matrix matching CYPs and P-gp mechanisms. | [`backend/app/routers/pv.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/pv.py) |
-| **Pharmacovigilance Clocks** | Real-time Schedule Y / ASU 24h, 7d, and 15d countdown escalation timers. | [`frontend/src/components/widgets.tsx`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/frontend/src/components/widgets.tsx) |
-| **Signal Detection (PRR / ROR)** | Disproportionality statistics (PRR, Yates-corrected χ², ROR 95% CI) mirror WHO-UMC. | [`backend/app/routers/pv.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/pv.py) |
-| **Cryptographic Audit Trail** | Immutable SHA-256 hash-chained transaction ledger with Merkle root anchoring. | [`backend/app/routers/audit_log.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/audit_log.py) |
-| **Global Interoperability** | 1-Click HL7 FHIR R4 Bundle exporter and CDISC SDTM (DM, AE, VS, QS) generation. | [`backend/app/routers/interop.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/interop.py) |
-| **Predictive Monitoring** | Leading-indicator risk score identifying visit slippage and query pileups. | [`backend/app/routers/quality.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/quality.py) |
+| **Ayurvedic Phenotyping CRF** | Full Prakriti, Vikriti, Agni, and Koshtha capture with longitudinal efficacy tracking. | [`participants.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/participants.py) |
+| **Herb-Drug Interaction Check** | Live Ayurvedic herb × allopathic drug matrix matching CYPs and P-gp mechanisms. | [`pv.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/pv.py) |
+| **Pharmacovigilance Clocks** | Real-time Schedule Y / ASU 24h, 7d, and 15d countdown escalation timers. | [`widgets.tsx`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/frontend/src/components/widgets.tsx) |
+| **Signal Detection (PRR / ROR)** | Disproportionality statistics (PRR, Yates-corrected χ², ROR 95% CI) mirror WHO-UMC. | [`pv.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/pv.py) |
+| **Cryptographic Audit Trail** | Immutable SHA-256 hash-chained transaction ledger with Merkle root anchoring. | [`audit_log.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/audit_log.py) |
+| **Global Interoperability** | 1-Click HL7 FHIR R4 Bundle exporter and CDISC SDTM (DM, AE, VS, QS) generation. | [`interop.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/interop.py) |
+| **Predictive Monitoring** | Leading-indicator risk score identifying visit slippage and query pileups. | [`quality.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/quality.py) |
 
 ---
 
