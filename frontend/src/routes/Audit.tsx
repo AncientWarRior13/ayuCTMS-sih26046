@@ -18,6 +18,7 @@ import {
   fmtDateTime,
   Loading,
   Modal,
+  PageHeader,
   Table,
   useToast,
 } from "../components/ui";
@@ -115,17 +116,12 @@ export default function AuditPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── Editorial Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)]">
-            Cryptographic Audit Ledger
-          </h1>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-            SHA-256 append-only transaction hash-chains with external Merkle anchoring (ALCOA+ certified)
-          </p>
-        </div>
-      </div>
+      {/* ── Page Header ── */}
+      <PageHeader
+        eyebrow="21 CFR PART 11 · ALCOA+ AUDIT TRAIL"
+        title="Cryptographic Audit Ledger"
+        description="SHA-256 append-only transaction hash-chains with external Merkle anchoring"
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Verification Hero Card */}

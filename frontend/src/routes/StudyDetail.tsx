@@ -5,7 +5,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { download, get, post, put } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { Can } from "../auth/RoleGuard";
-import { Badge, Button, Card, Empty, ErrorBox, Field, fmtDate, human, Loading, Modal, Table, Tabs, useToast } from "../components/ui";
+import { Badge, Button, Card, Empty, ErrorBox, Field, fmtDate, human, Loading, Modal, PageHeader, Table, Tabs, useToast } from "../components/ui";
 import { EnrolmentChart, KpiCard, LifecycleStepper, SaeClockChip, STATE_TONE, STATES } from "../components/widgets";
 import ParticipantDrawer from "./ParticipantDrawer";
 
@@ -85,11 +85,14 @@ function Overview({ s }: { s: any }) {
           {dash?.enrolment_curve?.length ? <EnrolmentChart curve={dash.enrolment_curve} target={s.target_sample} expected={exp} /> : <Empty>No enrolment yet</Empty>}
         </Card>
         <Card title="Study details">
-          <dl className="space-y-2 text-sm">
+          <dl className="space-y-2.5 text-sm">
             {[["Design", human(s.type)], ["Phase", s.phase], ["Intervention", s.intervention], ["Arms", (s.arms ?? []).join(" / ")], ["PI", s.pi_name],
               ["Planned", `${fmtDate(s.planned_start)} - ${fmtDate(s.planned_end)}`], ["CTRI", s.ctri?.ctri_number ?? "Not registered"],
               ["CTRI registered", fmtDate(s.ctri?.registered_on)]].map(([k, v]) => (
-              <div key={k} className="grid grid-cols-3 gap-2"><dt className="text-slate-500">{k}</dt><dd className="col-span-2 text-slate-800">{v || "-"}</dd></div>
+              <div key={k} className="grid grid-cols-3 gap-2 py-1 border-b border-[var(--border)] last:border-0">
+                <dt className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">{k}</dt>
+                <dd className="col-span-2 text-xs text-[var(--text)] font-medium">{v || "-"}</dd>
+              </div>
             ))}
           </dl>
         </Card>
@@ -198,15 +201,16 @@ function Participants({ s }: { s: any }) {
       }
     >
       {reconsent.length > 0 && (
-        <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          {reconsent.length} participant(s) must re-consent under {reconsent[0].amendment}. Data entry is blocked for them until re-consent is recorded.
+        <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-300 flex items-center gap-2">
+          <span className="font-mono font-bold uppercase tracking-wider text-[11px] bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/40">Action Required</span>
+          <span>{reconsent.length} participant(s) must re-consent under {reconsent[0].amendment}. Data entry is blocked for them until re-consent is recorded.</span>
         </div>
       )}
       {isLoading ? <Loading /> : (
         <Table head={["Subject", "Site", "Status", "Arm", "Sex / age", "Enrolled", "Missed visits", "AEs"]} empty={!data.length}>
           {data.map((p) => (
-            <tr key={p.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setOpen(p.id)}>
-              <td className="td mono font-medium text-brand-800">{p.subject_code}{reconsent.some((r) => r.id === p.id) && <Badge tone="amber">re-consent</Badge>}</td>
+            <tr key={p.id} className="cursor-pointer hover:bg-[var(--surface-2)]/60 transition-colors" onClick={() => setOpen(p.id)}>
+              <td className="td mono font-medium text-[var(--brand-text)] flex items-center gap-1.5">{p.subject_code}{reconsent.some((r) => r.id === p.id) && <Badge tone="amber">re-consent</Badge>}</td>
               <td className="td">{p.site_code}</td>
               <td className="td"><Badge tone={p.status === "WITHDRAWN" ? "red" : p.status === "COMPLETED" ? "gray" : "green"}>{human(p.status)}</Badge></td>
               <td className="td">{p.arm ?? "-"}</td>
@@ -220,7 +224,7 @@ function Participants({ s }: { s: any }) {
       )}
       {open && <ParticipantDrawer pid={open} study={s} onClose={() => setOpen(null)} />}
       <Modal open={enrol} onClose={() => setEnrol(false)} title="Enrol participant with informed consent" wide>
-        {s.state !== "ENROLLING" && <div className="mb-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">This study is in state {human(s.state)}. The server will refuse enrolment until the study reaches ENROLLING.</div>}
+        {s.state !== "ENROLLING" && <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">This study is in state {human(s.state)}. The server will refuse enrolment until the study reaches ENROLLING.</div>}
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); m.mutate(); }}>
           <Field label="Site">
             <select className="input" value={f.site_id} onChange={(e) => setF({ ...f, site_id: +e.target.value })}>
@@ -242,12 +246,12 @@ function Participants({ s }: { s: any }) {
           </Field>
           <Field label="Witness"><input className="input" value={f.witness_name} onChange={(e) => setF({ ...f, witness_name: e.target.value })} /></Field>
           {questions.length > 0 && (
-            <div className="rounded-md border border-brand-200 bg-brand-50 p-3 sm:col-span-2">
-              <p className="mb-2 text-xs font-medium text-brand-900">Comprehension check - read each question aloud and record the participant's answer</p>
+            <div className="rounded-xl border border-[#2FB39A]/30 bg-[#2FB39A]/10 p-3 sm:col-span-2">
+              <p className="mb-2 text-xs font-mono uppercase tracking-wider font-semibold text-[#2FB39A]">Comprehension check - read each question aloud and record the participant's answer</p>
               <div className="space-y-3">
                 {questions.map((q, i) => (
-                  <div key={i}>
-                    <p className="text-sm font-medium text-slate-800">{i + 1}. {q.question}</p>
+                  <div key={i} className="rounded-lg bg-[var(--surface-2)] p-2.5 border border-[var(--border)]">
+                    <p className="text-xs font-medium text-[var(--text)]">{i + 1}. {q.question}</p>
                     <div className="mt-1 flex flex-wrap gap-3">
                       {q.options.map((opt, oi) => (
                         <label key={oi} className="flex items-center gap-1.5 text-sm">
@@ -314,7 +318,7 @@ function Deviations({ s }: { s: any }) {
       </Card>
       <Modal open={!!sign} onClose={() => setSign(null)} title="Monitor sign-off">
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); so.mutate(); }}>
-          <p className="text-sm text-slate-600">{sign?.description}</p>
+          <p className="text-xs text-[var(--text-muted)]">{sign?.description}</p>
           <Field label="Corrective and preventive action (CAPA)"><textarea className="input" rows={3} required minLength={3} value={capa} onChange={(e) => setCapa(e.target.value)} /></Field>
           <ErrorBox error={so.error} />
           <Button disabled={so.isPending}>Sign off deviation</Button>
@@ -430,13 +434,13 @@ function Documents({ s }: { s: any }) {
             <Field label="Language"><select className="input" value={doc.language} onChange={(e) => setDoc({ ...doc, language: e.target.value })}><option value="en">English</option><option value="hi">Hindi</option></select></Field>
             <Field label="Effective from"><input className="input" type="date" required value={doc.effective_from} onChange={(e) => setDoc({ ...doc, effective_from: e.target.value })} /></Field>
             <div className="sm:col-span-3"><Field label="Full consent text (only its hash is stored)"><textarea className="input" rows={3} required minLength={10} value={doc.content} onChange={(e) => setDoc({ ...doc, content: e.target.value })} /></Field></div>
-            <div className="rounded-md border border-slate-200 p-3 sm:col-span-3">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/60 p-3.5 sm:col-span-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-600">Comprehension check (optional) - a short quiz administered alongside consent, per ICH-GCP informed-consent practice</p>
+                <p className="text-xs font-medium text-[var(--text-muted)]">Comprehension check (optional) - a short quiz administered alongside consent, per ICH-GCP informed-consent practice</p>
                 <Button type="button" size="sm" variant="secondary" onClick={addQuestion}>Add question</Button>
               </div>
               {doc.comprehension_questions.map((q, i) => (
-                <div key={i} className="mb-3 space-y-2 rounded border border-slate-100 bg-slate-50 p-2">
+                <div key={i} className="mb-3 space-y-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-2.5">
                   <div className="flex gap-2">
                     <input className="input" placeholder="Question" required value={q.question} onChange={(e) => updateQuestion(i, { question: e.target.value })} />
                     <Button type="button" size="sm" variant="ghost" onClick={() => removeQuestion(i)}>Remove</Button>
@@ -461,10 +465,10 @@ function Documents({ s }: { s: any }) {
         {s.amendments.length === 0 ? <Empty>No amendments</Empty> : (
           <ul className="space-y-2">
             {s.amendments.map((a: any) => (
-              <li key={a.id} className="rounded-md border p-3 text-sm">
-                <div className="flex items-center justify-between"><b>{a.version}</b><span className="text-xs text-slate-500">{fmtDate(a.approved_on)}</span></div>
-                <p className="mt-1 text-slate-700">{a.summary}</p>
-                {a.requires_reconsent && <Badge tone="amber">Re-consent required</Badge>}
+              <li key={a.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/60 p-3.5 text-xs">
+                <div className="flex items-center justify-between"><b className="text-[var(--text)] font-mono">{a.version}</b><span className="text-[11px] font-mono text-[var(--text-muted)]">{fmtDate(a.approved_on)}</span></div>
+                <p className="mt-1 text-[var(--text-muted)]">{a.summary}</p>
+                {a.requires_reconsent && <Badge tone="amber" className="mt-2">Re-consent required</Badge>}
               </li>
             ))}
           </ul>
@@ -528,7 +532,7 @@ function Exports({ s }: { s: any }) {
     <div className="grid gap-4 md:grid-cols-3">
       {items.filter((i) => i.show).map((i) => (
         <Card key={i.path} title={i.title}>
-          <p className="mb-4 text-sm text-slate-600">{i.desc}</p>
+          <p className="mb-4 text-xs text-[var(--text-muted)] leading-relaxed">{i.desc}</p>
           <Button variant="secondary" disabled={busy === i.path} onClick={() => go(i.path, `${s.protocol_no}-${i.name}`)}><i.icon size={16} /> {busy === i.path ? "Preparing..." : "Download"}</Button>
         </Card>
       ))}
@@ -556,32 +560,23 @@ export default function StudyDetail() {
   if (error || !s) return <ErrorBox error={error} />;
   return (
     <div className="space-y-6">
-      <div className="border-b border-[var(--border)] pb-4">
-        <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)] mb-1">
-          <Link to="/app/studies" className="text-[var(--brand-text)] hover:underline">
-            Studies
-          </Link>
-          <span>/</span>
-          <span className="text-[var(--text)] font-semibold">{s.protocol_no}</span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 mt-1">
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
-            {s.protocol_no}
-          </h1>
-          <Badge tone={STATE_TONE[s.state]} className="px-2 py-0.5 text-xs font-semibold">
-            {human(s.state)}
-          </Badge>
-          {s.ctri && (
-            <Badge tone="purple" className="px-2 py-0.5 text-xs font-mono font-semibold">
-              CTRI: {s.ctri.ctri_number}
+      <PageHeader
+        eyebrow={`PROTOCOL / ${s.protocol_no}`}
+        title={s.protocol_no}
+        description={s.title}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={STATE_TONE[s.state]} className="px-2.5 py-1 text-xs font-semibold">
+              {human(s.state)}
             </Badge>
-          )}
-        </div>
-        <p className="mt-1.5 max-w-4xl text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
-          {s.title}
-        </p>
-      </div>
+            {s.ctri && (
+              <Badge tone="purple" className="px-2.5 py-1 text-xs font-mono font-semibold">
+                CTRI: {s.ctri.ctri_number}
+              </Badge>
+            )}
+          </div>
+        }
+      />
       <Tabs<Tab>
         value={tab}
         onChange={(t) => setParams({ tab: t })}

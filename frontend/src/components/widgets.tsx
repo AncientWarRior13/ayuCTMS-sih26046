@@ -31,43 +31,43 @@ export function KpiCard({
   return (
     <div
       className={clsx(
-        "card p-4 transition-all duration-200 relative overflow-hidden group border",
-        tone === "danger" && "border-[var(--danger-border)] bg-[var(--danger-bg)]/20",
-        tone === "warn" && "border-[var(--warn-border)] bg-[var(--warn-bg)]/20",
-        tone === "ok" && "border-[var(--ok-border)] bg-[var(--ok-bg)]/20",
-        tone === "default" && "border-[var(--border)] hover:border-[var(--brand)]/40",
+        "card p-5 transition-all duration-200 relative overflow-hidden group border rounded-2xl bg-[#101815]/90 backdrop-blur-md shadow-lg",
+        tone === "danger" && "border-[#E5484D]/40 bg-[#E5484D]/10 hover:border-[#E5484D]/60",
+        tone === "warn" && "border-[#D9A441]/40 bg-[#D9A441]/10 hover:border-[#D9A441]/60",
+        tone === "ok" && "border-[#2FB39A]/40 bg-[#2FB39A]/10 hover:border-[#2FB39A]/60",
+        tone === "default" && "border-[#22302A] hover:border-[#2FB39A]/40 hover:shadow-[0_0_20px_rgba(47,179,154,0.12)]",
       )}
     >
       <div
         className={clsx(
           "absolute left-0 top-0 bottom-0 w-1",
-          tone === "danger" && "bg-[var(--danger)]",
-          tone === "warn" && "bg-[var(--warn)]",
-          tone === "ok" && "bg-[var(--ok)]",
-          tone === "default" && "bg-[var(--border)] group-hover:bg-[var(--brand)]",
+          tone === "danger" && "bg-[#E5484D] shadow-[0_0_8px_#E5484D]",
+          tone === "warn" && "bg-[#D9A441] shadow-[0_0_8px_#D9A441]",
+          tone === "ok" && "bg-[#2FB39A] shadow-[0_0_8px_#2FB39A]",
+          tone === "default" && "bg-[#22302A] group-hover:bg-[#2FB39A]",
         )}
       />
-      <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8FA398]">
         <span>{label}</span>
-        <span className="text-[var(--text-faint)] group-hover:text-[var(--text)] transition-colors">
+        <span className="text-[#56685F] group-hover:text-[#2FB39A] transition-colors">
           {icon}
         </span>
       </div>
       <div
         className={clsx(
-          "mt-2 font-display text-3xl font-semibold tracking-tight tabular-nums",
+          "mt-2 font-serif text-3xl sm:text-4xl font-medium tracking-tight tabular-nums",
           tone === "danger"
-            ? "text-[var(--danger)]"
+            ? "text-[#E5484D]"
             : tone === "warn"
-              ? "text-[var(--warn)]"
+              ? "text-[#D9A441]"
               : tone === "ok"
-                ? "text-[var(--ok)]"
-                : "text-[var(--text)]",
+                ? "text-[#39C8AD]"
+                : "text-[#E8EFE9]",
         )}
       >
         {value}
       </div>
-      {sub && <div className="mt-1 text-xs text-[var(--text-muted)]">{sub}</div>}
+      {sub && <div className="mt-1.5 text-xs text-[#8FA398] font-sans leading-relaxed">{sub}</div>}
     </div>
   );
 }

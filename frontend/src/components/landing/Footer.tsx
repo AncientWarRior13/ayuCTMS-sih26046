@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Database } from "lucide-react";
+import { BrandMark } from "../BrandMark";
 
 export default function Footer() {
   return (
@@ -10,9 +10,7 @@ export default function Footer() {
           {/* Column 1: Logo & Description */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#16201C] border border-[#2FB39A]/40 text-[#2FB39A]">
-                <Database className="h-4 w-4" />
-              </div>
+              <BrandMark size={28} />
               <span className="font-serif font-bold text-lg text-[#E8EFE9]">AyuCTMS</span>
             </div>
             <p className="text-[14px] text-[#8FA398] max-w-xs leading-relaxed">

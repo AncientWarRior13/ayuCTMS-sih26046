@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { ROLE_LABEL, useAuth, type Role } from "../auth/AuthContext";
 import { Button, ErrorBox, Field } from "../components/ui";
-import { ShieldCheck, Activity, KeyRound, Sparkles, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Activity, KeyRound, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";
+import { BrandMark } from "../components/BrandMark";
 import { ROLE_HOMES, sanitizeNext } from "./paths";
 
 const DEMO: [Role, string, string][] = [
@@ -56,6 +57,18 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-[#0A0F0D]">
+      {/* ── Top-Left Ghost Pill: Back to Home ── */}
+      <div className="absolute top-6 left-6 z-30">
+        <Link
+          to="/"
+          aria-label="Back to Home"
+          className="group inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-mono text-xs uppercase tracking-widest text-[#2FB39A]/90 border border-[#22302A] bg-[#101815]/90 backdrop-blur-md hover:text-[#39C8AD] hover:border-[#2FB39A]/60 hover:shadow-[0_0_16px_rgba(47,179,154,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2FB39A] transition-all duration-200"
+        >
+          <ArrowLeft size={14} className="text-[#2FB39A] transition-transform duration-200 group-hover:-translate-x-1" />
+          <span>← Back to Home</span>
+        </Link>
+      </div>
+
       {/* ── Cinematic Botanical Particle Glow Background ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Ambient radial glows */}
@@ -79,7 +92,7 @@ export default function Login() {
         </svg>
       </div>
 
-      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)]/95 shadow-2xl backdrop-blur-xl overflow-hidden">
+      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-1)]/95 shadow-2xl backdrop-blur-xl overflow-hidden mt-12 sm:mt-0">
         {/* ── Left Cinematic Editorial Column ── */}
         <div className="lg:col-span-6 p-8 lg:p-12 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[var(--border)] bg-gradient-to-b from-[var(--surface-2)]/80 to-[var(--surface-1)]">
           <div>
@@ -94,13 +107,7 @@ export default function Login() {
             </div>
 
             <div className="mt-8 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[#0A0F0D] p-2 flex items-center justify-center shadow-[0_0_16px_var(--brand-glow)]">
-                <svg viewBox="0 0 24 24" className="w-full h-full text-white fill-none stroke-current stroke-2">
-                  <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z" />
-                  <path d="M11 3v17" />
-                  <circle cx="11" cy="13" r="2" fill="currentColor" />
-                </svg>
-              </div>
+              <BrandMark size={42} />
               <div>
                 <h1 className="font-display text-3xl font-bold tracking-tight text-[var(--text)]">
                   AyuCTMS

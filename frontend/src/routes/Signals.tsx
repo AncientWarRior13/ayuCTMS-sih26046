@@ -13,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { get } from "../api/client";
-import { Badge, Card, Empty, Loading, Table } from "../components/ui";
+import { Badge, Card, Empty, Loading, PageHeader, Table } from "../components/ui";
 import { KpiCard } from "../components/widgets";
 import { Activity } from "lucide-react";
 
@@ -238,30 +238,26 @@ export default function SignalsPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)]">
-            Pharmacovigilance Signal Surveillance
-          </h1>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-            Disproportionality ratios, MedDRA clustering, and Ayurvedic Prakriti phenotypic stratification
-          </p>
-        </div>
-
-        <select
-          className="input w-64 text-xs font-mono"
-          value={study}
-          onChange={(e) => setStudy(e.target.value)}
-          aria-label="Filter by protocol study"
-        >
-          <option value="">All Protocol Studies</option>
-          {studies.map((x) => (
-            <option key={x.id} value={x.id}>
-              {x.protocol_no} — {x.title}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PageHeader
+        eyebrow="PHARMACOVIGILANCE & SAFETY COMMAND"
+        title="Pharmacovigilance Signal Surveillance"
+        description="Disproportionality ratios, MedDRA clustering, and Ayurvedic Prakriti phenotypic stratification"
+        actions={
+          <select
+            className="input w-64 text-xs font-mono"
+            value={study}
+            onChange={(e) => setStudy(e.target.value)}
+            aria-label="Filter by protocol study"
+          >
+            <option value="">All Protocol Studies</option>
+            {studies.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.protocol_no} — {x.title}
+              </option>
+            ))}
+          </select>
+        }
+      />
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">

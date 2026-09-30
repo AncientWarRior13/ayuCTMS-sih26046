@@ -4,11 +4,11 @@ import Lenis from "lenis";
 import {
   ArrowRight,
   CheckCircle2,
-  Database,
   Fingerprint,
   RefreshCw,
   ShieldAlert,
 } from "lucide-react";
+import { BrandMark } from "../components/BrandMark";
 import ChainScene from "../components/landing/three/ChainScene";
 import { SceneProvider, useSceneProgress } from "../components/landing/three/SceneContext";
 import { ScenePoster } from "../components/landing/three/ScenePoster";
@@ -161,9 +161,7 @@ function LandingContent() {
       <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-[#22302A]/60 bg-[#0A0F0D]/70 backdrop-blur-md">
         <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#16201C] border border-[#2FB39A]/40 text-[#2FB39A]">
-              <Database className="h-4 w-4" />
-            </div>
+            <BrandMark size={32} />
             <div>
               <span className="font-serif text-lg font-bold tracking-tight text-[#E8EFE9]">
                 AyuCTMS

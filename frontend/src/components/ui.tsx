@@ -9,6 +9,9 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
+import { BrandMark } from "./BrandMark";
+
+export { BrandMark };
 
 export function Button({
   variant = "primary",
@@ -26,15 +29,15 @@ export function Button({
         "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-sm)] font-medium transition-all duration-150 select-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" ? "px-2.5 py-1 text-xs" : size === "lg" ? "px-5 py-2.5 text-base" : "px-3.5 py-1.5 text-sm",
         variant === "primary" &&
-          "bg-[var(--brand)] text-[#0A0F0D] font-semibold hover:bg-[var(--brand-hover)] shadow-sm hover:shadow-[0_0_12px_var(--brand-glow)]",
+          "bg-[var(--brand)] text-[#0A0F0D] font-semibold hover:bg-[var(--brand-hover)] shadow-sm hover:shadow-[0_0_14px_var(--brand-glow)]",
         variant === "secondary" &&
-          "border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-3)] hover:border-[var(--text-muted)]",
+          "border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-3)] hover:border-[var(--brand)]/40",
         variant === "danger" &&
           "bg-[var(--danger)] text-white hover:opacity-90 shadow-sm",
         variant === "ghost" &&
           "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]",
         variant === "brass" &&
-          "border border-[var(--accent-brass)] bg-[var(--accent-brass-subtle)] text-[var(--accent-brass)] hover:bg-[var(--accent-brass)] hover:text-[#0A0F0D] font-medium",
+          "border border-[var(--accent-brass)]/60 bg-[var(--accent-brass-subtle)] text-[var(--accent-brass)] hover:bg-[var(--accent-brass)] hover:text-[#0A0F0D] font-medium",
         className,
       )}
     />
@@ -43,27 +46,153 @@ export function Button({
 
 export function Card({
   title,
+  eyebrow,
   actions,
   children,
   className,
 }: {
   title?: ReactNode;
+  eyebrow?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <section className={clsx("card overflow-hidden", className)}>
-      {(title || actions) && (
-        <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3 bg-[var(--surface-2)]/50">
-          <h2 className="text-sm font-semibold tracking-wide text-[var(--text)] font-sans flex items-center gap-2">
-            {title}
-          </h2>
+      {(title || actions || eyebrow) && (
+        <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-3.5 bg-[var(--surface-2)]/60">
+          <div>
+            {eyebrow && (
+              <div className="font-mono text-[10px] uppercase font-bold tracking-wider text-[var(--accent-brass)] mb-0.5">
+                {eyebrow}
+              </div>
+            )}
+            {title && (
+              <h2 className="text-sm font-semibold tracking-wide text-[var(--text)] font-sans flex items-center gap-2">
+                {title}
+              </h2>
+            )}
+          </div>
           <div className="flex items-center gap-2">{actions}</div>
         </header>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </section>
+  );
+}
+
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+  className,
+}: {
+  eyebrow?: string;
+  title: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={clsx("mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[#22302A]/80", className)}>
+      <div className="space-y-1.5">
+        {eyebrow && (
+          <div className="font-mono text-xs uppercase tracking-widest text-[#C8A45C] flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2FB39A] shadow-[0_0_6px_#2FB39A]" />
+            {eyebrow}
+          </div>
+        )}
+        <h1 className="font-display text-3xl sm:text-4xl font-medium tracking-tight text-[#E8EFE9]">
+          {title}
+        </h1>
+        {description && (
+          <p className="text-sm text-[#8FA398] leading-relaxed max-w-2xl font-sans">
+            {description}
+          </p>
+        )}
+      </div>
+      {actions && <div className="flex items-center gap-3 shrink-0">{actions}</div>}
+    </div>
+  );
+}
+
+export function Chip({
+  tone = "teal",
+  children,
+  className,
+}: {
+  tone?: "teal" | "brass" | "danger" | "ok" | "gray" | "info" | "purple";
+  children: ReactNode;
+  className?: string;
+}) {
+  const CHIP_TONES = {
+    teal: "bg-[#2FB39A]/15 text-[#39C8AD] border-[#2FB39A]/35 shadow-[0_0_12px_rgba(47,179,154,0.15)]",
+    brass: "bg-[#C8A45C]/15 text-[#C8A45C] border-[#C8A45C]/35",
+    danger: "bg-[#E5484D]/15 text-[#E5484D] border-[#E5484D]/35",
+    ok: "bg-[#2FB39A]/15 text-[#2FB39A] border-[#2FB39A]/35",
+    gray: "bg-[#16201C] text-[#8FA398] border-[#22302A]",
+    info: "bg-[#4C8DFF]/15 text-[#4C8DFF] border-[#4C8DFF]/35",
+    purple: "bg-[#8B6CF0]/15 text-[#8B6CF0] border-[#8B6CF0]/35",
+  };
+  return (
+    <span
+      className={clsx(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider border",
+        CHIP_TONES[tone],
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function AlertCallout({
+  tone = "warn",
+  title,
+  children,
+  icon,
+  className,
+}: {
+  tone?: "warn" | "danger" | "ok" | "info";
+  title?: ReactNode;
+  children: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+}) {
+  const CALLOUT_TONES = {
+    warn: "border-[#C8A45C]/40 bg-[#C8A45C]/10 text-[#E8EFE9]",
+    danger: "border-[#E5484D]/40 bg-[#E5484D]/10 text-[#E8EFE9]",
+    ok: "border-[#2FB39A]/40 bg-[#2FB39A]/10 text-[#E8EFE9]",
+    info: "border-[#4C8DFF]/40 bg-[#4C8DFF]/10 text-[#E8EFE9]",
+  };
+  const ACCENT_COLORS = {
+    warn: "text-[#C8A45C]",
+    danger: "text-[#E5484D]",
+    ok: "text-[#2FB39A]",
+    info: "text-[#4C8DFF]",
+  };
+  return (
+    <div
+      className={clsx(
+        "rounded-2xl border p-4.5 shadow-lg relative overflow-hidden backdrop-blur-md flex items-start gap-3.5",
+        CALLOUT_TONES[tone],
+        className,
+      )}
+    >
+      <div className={clsx("shrink-0 mt-0.5", ACCENT_COLORS[tone])}>
+        {icon || <AlertTriangle size={20} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        {title && (
+          <h4 className={clsx("font-display text-base font-semibold mb-1", ACCENT_COLORS[tone])}>
+            {title}
+          </h4>
+        )}
+        <div className="text-xs sm:text-sm text-[#CBDAD0] leading-relaxed font-sans">{children}</div>
+      </div>
+    </div>
   );
 }
 
@@ -90,7 +219,7 @@ export function Badge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono font-medium tracking-tight",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-mono font-medium tracking-tight border",
         TONES[tone],
         className,
       )}

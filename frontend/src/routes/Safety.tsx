@@ -23,6 +23,7 @@ import {
   human,
   Loading,
   Modal,
+  PageHeader,
   Table,
   useToast,
 } from "../components/ui";
@@ -826,35 +827,31 @@ export default function SafetyPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* ── Page Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)]">
-            Pharmacovigilance Command
-          </h1>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-            Surveillance inbox, statutory reporting clocks, and Ayurvedic interaction verification
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text)] cursor-pointer">
-            <input
-              type="checkbox"
-              className="rounded"
-              checked={serious}
-              onChange={(e) => setSerious(e.target.checked)}
-            />
-            Serious Only
-          </label>
-          <Can perm="ae.create">
-            <Button onClick={() => setReport(true)}>
-              <Plus size={16} /> Report Safety Incident
-            </Button>
-          </Can>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Safety & Statutory Telemetry"
+        title="Pharmacovigilance Command"
+        description="Surveillance inbox, 24h & 14d statutory reporting clocks, WHO-UMC causality evaluation, and Ayurvedic herb-drug interaction alerts."
+        actions={
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#E8EFE9] cursor-pointer bg-[#16201C] px-3 py-1.5 rounded-xl border border-[#22302A]">
+              <input
+                type="checkbox"
+                className="rounded accent-[#2FB39A]"
+                checked={serious}
+                onChange={(e) => setSerious(e.target.checked)}
+              />
+              Serious Only
+            </label>
+            <Can perm="ae.create">
+              <Button onClick={() => setReport(true)}>
+                <Plus size={16} /> Report Safety Incident
+              </Button>
+            </Can>
+          </div>
+        }
+      />
 
       <div className="grid gap-6 xl:grid-cols-5">
         {/* Left Column: Event List */}

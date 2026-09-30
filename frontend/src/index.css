@@ -13,14 +13,14 @@
 @import "@fontsource/noto-sans-devanagari/600.css";
 
 :root {
-  /* Default: Ink Dark Mode */
+  /* Default: Ink Dark Mode (Dark Forest Green) */
   --bg: #0A0F0D;
   --surface-1: #101815;
   --surface-2: #16201C;
   --surface-3: #1D2A24;
   --border: #22302A;
   --border-subtle: #192520;
-  --border-highlight: rgba(255, 255, 255, 0.08);
+  --border-highlight: rgba(47, 179, 154, 0.25);
 
   --text: #E8EFE9;
   --text-muted: #8FA398;
@@ -28,77 +28,39 @@
 
   --brand: #2FB39A;
   --brand-hover: #269984;
-  --brand-glow: rgba(47, 179, 154, 0.15);
+  --brand-glow: rgba(47, 179, 154, 0.20);
   --brand-text: #39C8AD;
 
   --accent-brass: #C8A45C;
-  --accent-brass-subtle: rgba(200, 164, 92, 0.12);
+  --accent-brass-subtle: rgba(200, 164, 92, 0.15);
 
   /* Strict Semantics */
-  --ok: #2FBF71;
-  --ok-bg: rgba(47, 191, 113, 0.12);
-  --ok-border: rgba(47, 191, 113, 0.25);
+  --ok: #2FB39A;
+  --ok-bg: rgba(47, 179, 154, 0.15);
+  --ok-border: rgba(47, 179, 154, 0.35);
 
-  --warn: #F2A93B;
-  --warn-bg: rgba(242, 169, 59, 0.12);
-  --warn-border: rgba(242, 169, 59, 0.25);
+  --warn: #D9A441;
+  --warn-bg: rgba(217, 164, 65, 0.15);
+  --warn-border: rgba(217, 164, 65, 0.35);
 
   --danger: #E5484D;
-  --danger-bg: rgba(229, 72, 77, 0.12);
-  --danger-border: rgba(229, 72, 77, 0.25);
+  --danger-bg: rgba(229, 72, 77, 0.15);
+  --danger-border: rgba(229, 72, 77, 0.35);
 
   --info: #4C8DFF;
-  --info-bg: rgba(76, 141, 255, 0.12);
-  --info-border: rgba(76, 141, 255, 0.25);
+  --info-bg: rgba(76, 141, 255, 0.15);
+  --info-border: rgba(76, 141, 255, 0.35);
 
   /* Prakriti Tri-tone */
   --vata: #7A8FB8;
   --pitta: #E0713A;
   --kapha: #6FA36B;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
-}
-
-html.light {
-  /* Parchment Light Mode */
-  --bg: #F6F2E9;
-  --surface-1: #FFFDF7;
-  --surface-2: #F0EBDD;
-  --surface-3: #E6DFCE;
-  --border: #E4DCCB;
-  --border-subtle: #ECE5D7;
-  --border-highlight: rgba(0, 0, 0, 0.05);
-
-  --text: #14201A;
-  --text-muted: #5E6B62;
-  --text-faint: #8E9C92;
-
-  --brand: #0E6B5C;
-  --brand-hover: #0B564A;
-  --brand-glow: rgba(14, 107, 92, 0.12);
-  --brand-text: #0E6B5C;
-
-  --accent-brass: #9C7B2E;
-  --accent-brass-subtle: rgba(156, 123, 46, 0.12);
-
-  --ok: #1C8C4E;
-  --ok-bg: rgba(28, 140, 78, 0.10);
-  --ok-border: rgba(28, 140, 78, 0.25);
-
-  --warn: #D98207;
-  --warn-bg: rgba(217, 130, 7, 0.10);
-  --warn-border: rgba(217, 130, 7, 0.25);
-
-  --danger: #CE2C31;
-  --danger-bg: rgba(206, 44, 49, 0.10);
-  --danger-border: rgba(206, 44, 49, 0.25);
-
-  --info: #2B6FE0;
-  --info-bg: rgba(43, 111, 224, 0.10);
-  --info-border: rgba(43, 111, 224, 0.25);
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 }
 
 @theme {
@@ -124,9 +86,9 @@ html.light {
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  --font-display: "Fraunces", Georgia, serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-display: "Newsreader Variable", Georgia, serif;
+  --font-sans: "Inter", "Geist Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
   --font-hindi: "Noto Sans Devanagari", sans-serif;
 }
 
@@ -205,10 +167,10 @@ body::before {
 /* Inputs, Cards, and Utilities */
 .input {
   width: 100%;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background-color: var(--surface-1);
-  padding: 0.5rem 0.75rem;
+  background-color: var(--surface-2);
+  padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
   color: var(--text);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -226,24 +188,39 @@ body::before {
 .card {
   background-color: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
   position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  border-color: rgba(47, 179, 154, 0.35);
+}
+
+.glass-card {
+  background: rgba(16, 24, 21, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
 .th {
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   text-align: left;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .td {
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   font-size: 0.8125rem;
   color: var(--text);
   border-bottom: 1px solid var(--border-subtle);

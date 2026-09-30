@@ -3,23 +3,53 @@ import clsx from "clsx";
 import {
   Activity,
   Bell,
+  ChevronRight,
   ClipboardList,
   FileSearch,
   Gauge,
   Grid3x3,
   LogOut,
   Menu,
-  Moon,
+  Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
-  Sun,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { get, post, wsUrl } from "../api/client";
 import { ROLE_HOME, ROLE_LABEL, useAuth } from "../auth/AuthContext";
+import { BrandMark } from "./BrandMark";
 import { Badge, fmtDateTime, LEVEL_TONE, useToast } from "./ui";
+
+/* ── Live 1Hz Regulatory Clock Chip ── */
+function LiveClockChip() {
+  const [timeStr, setTimeStr] = useState(() => {
+    const d = new Date();
+    return d.toTimeString().slice(0, 8);
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const d = new Date();
+      setTimeStr(d.toTimeString().slice(0, 8));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="hidden lg:flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815]/90 px-3 py-1 font-mono text-[11px] text-[#8FA398] shadow-sm">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2FB39A] opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2FB39A]" />
+      </span>
+      <span className="text-[#39C8AD] font-bold tabular-nums">{timeStr} IST</span>
+      <span className="text-[#56685F]">·</span>
+      <span className="text-[#56685F] uppercase tracking-wider text-[10px]">1Hz Telemetry</span>
+    </div>
+  );
+}
 
 /* ── Live Alert Dropdown ── */
 function AlertBell() {
@@ -94,14 +124,14 @@ function AlertBell() {
       <button
         aria-label={`Alerts: ${alerts.length} unacknowledged`}
         onClick={() => setOpen((o) => !o)}
-        className="relative rounded-lg p-2 text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors border border-transparent hover:border-[var(--border)]"
+        className="relative rounded-xl p-2 text-[#8FA398] hover:text-[#E8EFE9] hover:bg-[#16201C] transition-colors border border-transparent hover:border-[#22302A]"
       >
         <Bell size={18} />
         {alerts.length > 0 && (
           <span
             className={clsx(
-              "absolute -right-1 -top-1 min-w-5 h-5 rounded-full px-1 flex items-center justify-center text-[10px] font-mono font-bold text-white shadow-sm",
-              critical ? "bg-[var(--danger)]" : "bg-[var(--warn)]",
+              "absolute -right-1 -top-1 min-w-5 h-5 rounded-full px-1 flex items-center justify-center text-[10px] font-mono font-bold text-white shadow-md",
+              critical ? "bg-[#E5484D]" : "bg-[#D9A441]",
             )}
           >
             {alerts.length > 99 ? "99+" : alerts.length}
@@ -110,48 +140,49 @@ function AlertBell() {
         <span
           title={live ? "WebSocket Connected" : "Connecting to telemetry"}
           className={clsx(
-            "absolute bottom-1 right-1 h-2 w-2 rounded-full ring-2 ring-[var(--surface-1)]",
-            live ? "bg-[var(--ok)] shadow-[0_0_6px_var(--ok)]" : "bg-[var(--text-faint)]",
+            "absolute bottom-1 right-1 h-2 w-2 rounded-full ring-2 ring-[#101815]",
+            live ? "bg-[#2FB39A] shadow-[0_0_6px_#2FB39A]" : "bg-[#56685F]",
           )}
         />
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-96 max-w-[90vw] rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] shadow-2xl overflow-hidden animate-slide-up">
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3 bg-[var(--surface-2)]">
-            <span className="text-xs font-semibold tracking-wider uppercase text-[var(--text)]">
+        <div className="absolute right-0 z-50 mt-2 w-96 max-w-[90vw] rounded-2xl border border-[#22302A] bg-[#101815] shadow-2xl overflow-hidden backdrop-blur-xl animate-fade-in">
+          <div className="flex items-center justify-between border-b border-[#22302A] px-5 py-3.5 bg-[#16201C]">
+            <span className="font-mono text-xs font-semibold tracking-wider uppercase text-[#E8EFE9] flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2FB39A]" />
               Operational Alerts ({alerts.length})
             </span>
             <Link
               to="/app/alerts"
               onClick={() => setOpen(false)}
-              className="text-xs font-medium text-[var(--brand)] hover:underline"
+              className="text-xs font-medium text-[#2FB39A] hover:underline"
             >
               View all
             </Link>
           </div>
-          <ul className="max-h-96 divide-y divide-[var(--border-subtle)] overflow-y-auto">
+          <ul className="max-h-96 divide-y divide-[#1D2A24] overflow-y-auto">
             {alerts.length === 0 && (
-              <li className="p-6 text-center text-xs text-[var(--text-muted)]">
+              <li className="p-8 text-center text-xs text-[#8FA398]">
                 No unacknowledged alerts
               </li>
             )}
             {alerts.slice(0, 20).map((a) => (
-              <li key={a.id} className="flex gap-3 px-4 py-3 text-xs hover:bg-[var(--surface-2)]/50 transition-colors">
+              <li key={a.id} className="flex gap-3 px-5 py-3.5 text-xs hover:bg-[#16201C]/60 transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <Badge tone={LEVEL_TONE[a.level]}>{a.level}</Badge>
-                    <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                    <span className="text-[11px] font-mono text-[#8FA398]">
                       {fmtDateTime(a.created_at)}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-[var(--text)] line-clamp-2 leading-relaxed">
+                  <p className="mt-1 text-xs text-[#E8EFE9] line-clamp-2 leading-relaxed">
                     {a.message}
                   </p>
                 </div>
                 {can("alert.ack") && (
                   <button
-                    className="self-start text-[11px] font-semibold text-[var(--brand)] hover:underline whitespace-nowrap"
+                    className="self-start text-[11px] font-semibold text-[#2FB39A] hover:underline whitespace-nowrap font-mono"
                     onClick={async () => {
                       await post(`/alerts/${a.id}/ack`);
                       qc.invalidateQueries({ queryKey: ["alerts"] });
@@ -184,18 +215,8 @@ export default function Layout() {
   const { me, can, logout } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
-  const [menu, setMenu] = useState(false);
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.remove("dark");
-      document.documentElement.classList.add("light");
-    }
-  }, [isDark]);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   if (!me) return null;
 
@@ -205,51 +226,67 @@ export default function Layout() {
   }));
 
   const isRegulator = me.role === "REGULATOR";
+  const activeNavItem = items.find((i) => i.to === loc.pathname || (i.to !== "/" && loc.pathname.startsWith(i.to)));
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      {/* ── Left Rail Navigation ── */}
+    <div className="relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] flex overflow-x-hidden">
+      {/* ── Ambient Radial Glows & Subtle Celestial Arc Decorations ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-[#2FB39A]/10 blur-[140px]" />
+        <div className="absolute top-1/2 -right-40 w-96 h-96 rounded-full bg-[#C8A45C]/8 blur-[140px]" />
+        <div className="absolute -bottom-40 left-1/3 w-96 h-96 rounded-full bg-[#2FB39A]/8 blur-[140px]" />
+
+        <svg className="absolute inset-0 w-full h-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10%" cy="10%" r="520" stroke="#2FB39A" strokeWidth="1" strokeDasharray="8 8" fill="none" />
+          <circle cx="90%" cy="85%" r="620" stroke="#C8A45C" strokeWidth="1" strokeDasharray="4 12" fill="none" />
+        </svg>
+      </div>
+
+      {/* ── Slim Left Rail Navigation (Collapses on Tablet, Drawer on Mobile) ── */}
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-40 w-64 border-r border-[var(--border)] bg-[var(--surface-1)] transition-transform duration-200 lg:static lg:translate-x-0 flex flex-col justify-between",
-          menu ? "translate-x-0" : "-translate-x-full",
+          "fixed inset-y-0 left-0 z-40 w-64 border-r border-[#22302A] bg-[#101815]/95 backdrop-blur-xl transition-transform duration-200 lg:static lg:translate-x-0 flex flex-col justify-between shadow-2xl",
+          mobileMenu ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col flex-1 overflow-y-auto">
-          {/* Brand & Crest Header */}
-          <div className="flex h-16 items-center gap-3 border-b border-[var(--border)] px-5 bg-[var(--surface-2)]/40">
-            {/* Custom Leaf-in-Hash-Chain SVG Mark */}
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--brand)] to-[#0A0F0D] p-1.5 flex items-center justify-center shadow-[0_0_12px_var(--brand-glow)]">
-              <svg viewBox="0 0 24 24" className="w-full h-full text-white fill-none stroke-current stroke-2">
-                <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 11 3s7 4 7 10a7 7 0 0 1-7 7Z" />
-                <path d="M11 3v17" />
-                <circle cx="11" cy="13" r="2" fill="currentColor" />
-              </svg>
-            </div>
-            <div>
-              <div className="font-display text-base font-bold tracking-tight text-[var(--text)] flex items-center gap-1.5">
-                AyuCTMS
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[var(--brand)]/15 text-[var(--brand-text)] font-semibold">
-                  AIIA
-                </span>
+          {/* Brand Header with official BrandMark and wordmark */}
+          <div className="flex h-18 items-center gap-3 border-b border-[#22302A] px-5 bg-[#16201C]/60">
+            <Link to="/" className="flex items-center gap-3 group">
+              <BrandMark size={34} />
+              <div>
+                <div className="font-serif text-lg font-bold tracking-tight text-[#E8EFE9] flex items-center gap-1.5 leading-none">
+                  AyuCTMS
+                  <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-[#2FB39A]/15 text-[#39C8AD] border border-[#2FB39A]/30 font-bold">
+                    AIIA
+                  </span>
+                </div>
+                <div className="font-mono text-[10px] tracking-wide text-[#8FA398] mt-1 leading-none">
+                  Ministry of Ayush · SIH 26046
+                </div>
               </div>
-              <div className="text-[10px] font-mono tracking-wide text-[var(--text-muted)]">
-                Ayurveda Clinical Trials
-              </div>
-            </div>
+            </Link>
+            {/* Close button on mobile */}
+            <button
+              onClick={() => setMobileMenu(false)}
+              className="lg:hidden ml-auto p-1 text-[#8FA398] hover:text-[#E8EFE9]"
+              aria-label="Close navigation"
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          {/* Role Status Tag */}
+          {/* Active Role Status Pill */}
           <div className="px-4 pt-4 pb-2">
-            <div className="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)]">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--brand)] shadow-[0_0_6px_var(--brand)]" />
-                <span className="text-[11px] font-mono font-semibold tracking-wider text-[var(--text)]">
+            <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#22302A] bg-[#16201C]/80 shadow-inner">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="h-2 w-2 rounded-full bg-[#2FB39A] shadow-[0_0_6px_#2FB39A] shrink-0" />
+                <span className="font-mono text-[11px] font-semibold tracking-wider text-[#E8EFE9] truncate">
                   {ROLE_LABEL[me.role]}
                 </span>
               </div>
               {isRegulator && (
-                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--accent-brass)]/20 text-[var(--accent-brass)] font-bold">
+                <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#C8A45C]/20 text-[#C8A45C] font-bold shrink-0">
                   Read-Only
                 </span>
               )}
@@ -267,27 +304,29 @@ export default function Layout() {
                 <NavLink
                   key={n.to}
                   to={n.to}
-                  onClick={() => setMenu(false)}
+                  onClick={() => setMobileMenu(false)}
                   className={clsx(
-                    "flex items-center gap-3 rounded-[var(--radius-sm)] px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all duration-150 relative group",
+                    "flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all duration-150 relative group select-none",
                     active
-                      ? "bg-[var(--surface-3)] text-[var(--brand-text)] border border-[var(--brand)]/30 font-bold shadow-sm"
-                      : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]",
+                      ? "bg-[#1D2A24] text-[#39C8AD] border border-[#2FB39A]/30 font-bold shadow-[0_0_16px_rgba(47,179,154,0.12)]"
+                      : "text-[#8FA398] hover:text-[#E8EFE9] hover:bg-[#16201C] border border-transparent",
                   )}
                 >
+                  {/* Left teal active accent bar */}
+                  {active && (
+                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-[#2FB39A] shadow-[0_0_8px_#2FB39A]" />
+                  )}
+
                   <n.icon
                     size={17}
                     className={clsx(
                       "shrink-0 transition-colors",
                       active
-                        ? "text-[var(--brand)]"
-                        : "text-[var(--text-faint)] group-hover:text-[var(--text)]",
+                        ? "text-[#2FB39A]"
+                        : "text-[#56685F] group-hover:text-[#E8EFE9]",
                     )}
                   />
                   <span>{n.label}</span>
-                  {active && (
-                    <span className="absolute right-2.5 h-1.5 w-1.5 rounded-full bg-[var(--brand)] shadow-[0_0_6px_var(--brand)]" />
-                  )}
                 </NavLink>
               );
             })}
@@ -295,55 +334,78 @@ export default function Layout() {
         </div>
 
         {/* Regulatory & Synthetic Data Disclaimer Footer */}
-        <div className="border-t border-[var(--border)] p-4 bg-[var(--surface-2)]/30 text-[10px] leading-relaxed text-[var(--text-muted)]">
-          <div className="flex items-center gap-1.5 font-mono text-[var(--text-faint)] uppercase font-semibold">
-            <ShieldCheck size={12} className="text-[var(--brand)]" />
-            <span>Integrity Guard</span>
+        <div className="border-t border-[#22302A] p-4 bg-[#16201C]/40 text-[11px] leading-relaxed text-[#8FA398]">
+          <div className="flex items-center gap-2 font-mono text-[#56685F] uppercase font-semibold text-[10px]">
+            <ShieldCheck size={13} className="text-[#2FB39A]" />
+            <span>Integrity Guard Active</span>
           </div>
-          <p className="mt-1 text-[var(--text-faint)]">
-            Synthetic demo dataset · AIIA & Ministry of Ayush · SIH 26046
+          <p className="mt-1 text-[11px] text-[#56685F] font-sans">
+            Forward-secure SHA-256 hash chains · 21 CFR Part 11
           </p>
         </div>
       </aside>
 
-      {menu && (
+      {/* Backdrop for mobile drawer */}
+      {mobileMenu && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
-          onClick={() => setMenu(false)}
+          className="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileMenu(false)}
         />
       )}
 
-      {/* ── Main Content Area ── */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top Operational Bar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface-1)]/90 px-5 backdrop-blur-md">
-          <div className="flex items-center gap-3">
+      {/* ── Main Command Canvas ── */}
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
+        {/* Top Operational Command Bar */}
+        <header className="sticky top-0 z-30 flex h-18 items-center justify-between gap-4 border-b border-[#22302A] bg-[#0A0F0D]/85 px-6 backdrop-blur-xl">
+          <div className="flex items-center gap-4 min-w-0">
+            {/* Mobile Hamburger */}
             <button
-              className="rounded-lg p-2 text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] lg:hidden"
+              className="rounded-xl p-2 text-[#8FA398] hover:text-[#E8EFE9] hover:bg-[#16201C] lg:hidden border border-[#22302A]"
               aria-label="Open navigation"
-              onClick={() => setMenu(true)}
+              onClick={() => setMobileMenu(true)}
             >
               <Menu size={20} />
             </button>
-            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
-              <span className="text-[var(--text)] font-semibold">AyuCTMS</span>
-              <span>/</span>
-              <span className="text-[var(--brand-text)] font-medium">
-                {items.find((i) => i.to === loc.pathname || (i.to !== "/" && loc.pathname.startsWith(i.to)))?.label || "Workspace"}
+
+            {/* Monospace Breadcrumb */}
+            <div className="flex items-center gap-2 font-mono text-xs text-[#8FA398]">
+              <Link to="/" className="text-[#56685F] hover:text-[#2FB39A] transition-colors uppercase tracking-wider">
+                AyuCTMS
+              </Link>
+              <ChevronRight size={13} className="text-[#56685F]" />
+              <span className="text-[#39C8AD] font-semibold uppercase tracking-wider">
+                {activeNavItem?.label || "Workspace"}
               </span>
+            </div>
+
+            {/* Quick Search Input */}
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815]/90 px-3 py-1.5 text-xs text-[#8FA398] w-64 focus-within:border-[#2FB39A]/60 focus-within:shadow-[0_0_12px_rgba(47,179,154,0.15)] transition-all">
+              <Search size={14} className="text-[#56685F]" />
+              <input
+                type="text"
+                placeholder="Search studies, SAEs, subjects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent text-xs text-[#E8EFE9] placeholder-[#56685F] focus:outline-none w-full"
+              />
             </div>
           </div>
 
+          {/* Right Status Actions */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              aria-label="Toggle Theme"
-              onClick={() => setIsDark(!isDark)}
-              className="rounded-lg p-2 text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] border border-transparent hover:border-[var(--border)] transition-colors"
-              title={isDark ? "Switch to Parchment (Light)" : "Switch to Ink (Dark)"}
-            >
-              {isDark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+            {/* Live 1Hz Clock */}
+            <LiveClockChip />
+
+            {/* Synthetic Data Indicator Pill */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-[#C8A45C]/35 bg-[#C8A45C]/10 px-3 py-1 font-mono text-[10px] uppercase font-bold tracking-wider text-[#C8A45C]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#C8A45C] animate-pulse" />
+              Synthetic Data Mode
+            </div>
+
+            {/* Role Badge Chip */}
+            <div className="inline-flex items-center gap-1 rounded-full border border-[#2FB39A]/35 bg-[#2FB39A]/10 px-2.5 py-1 font-mono text-[11px] font-bold text-[#39C8AD]">
+              {me.role}
+            </div>
 
             {/* Alert Bell */}
             <AlertBell />
@@ -351,37 +413,37 @@ export default function Layout() {
             {/* Account Pill */}
             <Link
               to="/app/account"
-              className="flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-2)]/60 px-3 py-1.5 hover:border-[var(--brand)]/40 transition-colors"
+              className="flex items-center gap-2.5 rounded-xl border border-[#22302A] bg-[#16201C]/80 px-3 py-1.5 hover:border-[#2FB39A]/40 hover:bg-[#1D2A24] transition-all"
             >
-              <div className="h-6 w-6 rounded-full bg-[var(--brand)]/20 text-[var(--brand-text)] flex items-center justify-center font-bold text-xs">
+              <div className="h-7 w-7 rounded-lg bg-[#2FB39A]/20 text-[#39C8AD] border border-[#2FB39A]/30 flex items-center justify-center font-bold text-xs font-mono">
                 {me.full_name.charAt(0)}
               </div>
               <div className="hidden md:block text-left">
-                <div className="text-xs font-semibold text-[var(--text)] leading-tight">
+                <div className="text-xs font-semibold text-[#E8EFE9] leading-tight">
                   {me.full_name}
                 </div>
-                <div className="text-[10px] font-mono text-[var(--text-muted)]">
+                <div className="font-mono text-[10px] text-[#8FA398]">
                   {ROLE_LABEL[me.role]}
                 </div>
               </div>
             </Link>
 
-            {/* Logout */}
+            {/* Sign Out Button */}
             <button
               aria-label="Sign out"
               title="Sign out"
-              className="rounded-lg p-2 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] border border-transparent transition-colors"
+              className="rounded-xl p-2 text-[#8FA398] hover:text-[#E5484D] hover:bg-[#E5484D]/15 border border-transparent hover:border-[#E5484D]/30 transition-colors"
               onClick={() => {
                 logout();
                 nav("/");
               }}
             >
-              <LogOut size={17} />
+              <LogOut size={18} />
             </button>
           </div>
         </header>
 
-        {/* Workspace Canvas */}
+        {/* Dynamic Workspace Canvas with smooth fade transition */}
         <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8 animate-fade-in">
           <Outlet />
         </main>

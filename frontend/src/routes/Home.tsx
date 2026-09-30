@@ -24,12 +24,14 @@ import { ROLE_LABEL, useAuth } from "../auth/AuthContext";
 import {
   Badge,
   Card,
+  Chip,
   Empty,
   fmtDate,
   fmtDateTime,
   human,
   LEVEL_TONE,
   Loading,
+  PageHeader,
   Table,
 } from "../components/ui";
 import {
@@ -531,28 +533,29 @@ export default function Home() {
   const r = me.role;
 
   return (
-    <div className="space-y-6">
-      {/* ── Editorial Header ── */}
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--border)] pb-5">
-        <div>
-          <div className="text-xs font-mono uppercase tracking-widest text-[var(--brand-text)] font-semibold">
-            Institutional Dashboard · {ROLE_LABEL[r]}
-          </div>
-          <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text)]">
-            Welcome back, {me.full_name}
-          </h1>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-            Command view scoped for {ROLE_LABEL[r]} operations
-            {r === "REGULATOR" && " with strict read-only regulatory governance"}
-          </p>
-        </div>
-
-        {r === "REGULATOR" && (
-          <Badge tone="purple" className="py-1 px-2.5 text-xs font-semibold">
-            <ShieldCheck size={14} className="mr-1.5" /> Read-Only Sovereign Oversight
-          </Badge>
-        )}
-      </div>
+    <div className="space-y-8 animate-fade-in">
+      {/* ── Standardized Page Header ── */}
+      <PageHeader
+        eyebrow={`Institutional Dashboard · ${ROLE_LABEL[r]}`}
+        title={`Welcome back, ${me.full_name}`}
+        description={
+          r === "REGULATOR"
+            ? "Command view scoped for Sovereign Regulatory Oversight with strict read-only audit guarantees."
+            : `Operational command view scoped for ${ROLE_LABEL[r]} trial workflows and real-time statutory regulatory oversight.`
+        }
+        actions={
+          r === "REGULATOR" ? (
+            <Chip tone="brass">
+              <ShieldCheck size={13} className="inline mr-1" /> Read-Only Sovereign Oversight
+            </Chip>
+          ) : (
+            <Chip tone="teal">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2FB39A] inline-block mr-1.5" />
+              {me.sites?.[0]?.name || "Central Ayush Network"}
+            </Chip>
+          )
+        }
+      />
 
       {isLoading || !p ? <Loading /> : <PortfolioKpis p={p} />}
 

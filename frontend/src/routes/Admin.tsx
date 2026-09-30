@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { get, patch, post, put } from "../api/client";
 import { ROLE_LABEL, useAuth, type Role } from "../auth/AuthContext";
-import { Badge, Button, Card, ErrorBox, Field, fmtDateTime, Loading, Modal, Table, Tabs, useToast } from "../components/ui";
+import { Badge, Button, Card, ErrorBox, Field, fmtDateTime, Loading, Modal, PageHeader, Table, Tabs, useToast } from "../components/ui";
 
 const ROLES = Object.keys(ROLE_LABEL) as Role[];
 
@@ -90,7 +90,7 @@ function Rules() {
   const m = useMutation({ mutationFn: () => put("/admin/rules", { rule_key: edit.rule_key, hours_allowed: +edit.hours_allowed, source_note: edit.source_note }), onSuccess: () => { toast("Rule updated"); setEdit(null); qc.invalidateQueries({ queryKey: ["rules"] }); } });
   return (
     <Card title="Regulatory reporting rules">
-      <p className="mb-3 text-sm text-slate-600">Durations drive every SAE clock. Changing a value requires a citation of the regulation clause; changes are audited.</p>
+      <p className="mb-3 text-xs text-[var(--text-muted)] leading-relaxed">Durations drive every SAE clock. Changing a value requires a citation of the regulation clause; changes are audited.</p>
       <Table head={["Rule", "Description", "Hours", "Source citation", ""]}>
         {data.map((r) => (
           <tr key={r.id}>
@@ -157,8 +157,12 @@ export default function AdminPage() {
   ];
   const [tab, setTab] = useState<T>(tabs[0][0]);
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Administration</h1>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="SYSTEM CONFIGURATION & ACCESS GOVERNANCE"
+        title="System Administration"
+        description="User RBAC management, site registration, regulatory SLA clock rules, and data provenance"
+      />
       <Tabs value={tab} onChange={setTab} tabs={tabs} />
       {tab === "users" && <Users />}
       {tab === "sites" && <Sites />}

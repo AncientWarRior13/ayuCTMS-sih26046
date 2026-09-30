@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { useState } from "react";
 import { get } from "../api/client";
-import { Badge, Card, Empty, human, Loading, Table, Tabs } from "../components/ui";
+import { Badge, Card, Empty, human, Loading, PageHeader, Table, Tabs } from "../components/ui";
 
 const LABELS: Record<string, string> = {
   major_deviation_rate: "Major Protocol Deviations (Weight 25%)",
@@ -336,16 +336,15 @@ export default function RiskPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <div className="border-b border-[var(--border)] pb-4">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)]">
-          Risk-Based Monitoring Command
-        </h1>
-        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-          {tab === "heatmap"
+      <PageHeader
+        eyebrow="ICH E6(R2) RISK-BASED MONITORING"
+        title="Risk-Based Monitoring Command"
+        description={
+          tab === "heatmap"
             ? "Multi-dimensional study × site scoring (0–100) from weighted compliance, query aging, and safety markers."
-            : "Predictive risk scoring from leading trial indicators to avert protocol deviations before incident occurrence."}
-        </p>
-      </div>
+            : "Predictive risk scoring from leading trial indicators to avert protocol deviations before incident occurrence."
+        }
+      />
 
       <Tabs
         value={tab}

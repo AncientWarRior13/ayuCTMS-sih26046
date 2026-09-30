@@ -13,6 +13,7 @@ import {
   human,
   Loading,
   Modal,
+  PageHeader,
   Table,
   useToast,
 } from "../components/ui";
@@ -211,38 +212,34 @@ export default function StudiesPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text)]">
-            Clinical Trial Protocols
-          </h1>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-            Lifecycle state progression, CTRI registry verification, and enrollment quotas
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="PROTOCOL LIFECYCLE & REGISTRATION"
+        title="Clinical Trial Protocols"
+        description="Lifecycle state progression, CTRI registry verification, and enrollment quotas"
+        actions={
+          <div className="flex items-center gap-3">
+            <select
+              className="input w-52 font-mono text-xs"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              aria-label="Filter by lifecycle state"
+            >
+              <option value="">All Lifecycle States</option>
+              {STATES.map((s) => (
+                <option key={s} value={s}>
+                  {human(s)}
+                </option>
+              ))}
+            </select>
 
-        <div className="flex items-center gap-3">
-          <select
-            className="input w-52 font-mono text-xs"
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-            aria-label="Filter by lifecycle state"
-          >
-            <option value="">All Lifecycle States</option>
-            {STATES.map((s) => (
-              <option key={s} value={s}>
-                {human(s)}
-              </option>
-            ))}
-          </select>
-
-          <Can perm="study.create">
-            <Button onClick={() => setOpen(true)}>
-              <Plus size={16} /> New Protocol
-            </Button>
-          </Can>
-        </div>
-      </div>
+            <Can perm="study.create">
+              <Button onClick={() => setOpen(true)}>
+                <Plus size={16} /> New Protocol
+              </Button>
+            </Can>
+          </div>
+        }
+      />
 
       <Card>
         {isLoading ? (
