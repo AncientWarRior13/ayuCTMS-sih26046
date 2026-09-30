@@ -1,20 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
-  <defs>
-    <radialGradient id="bgGrad" cx="30%" cy="25%" r="85%">
-      <stop offset="0%" stop-color="#39C8AD" />
-      <stop offset="45%" stop-color="#2FB39A" />
-      <stop offset="100%" stop-color="#0A1410" />
-    </radialGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#2FB39A" flood-opacity="0.45" />
-    </filter>
-  </defs>
-  <!-- Circular badge with emerald gradient and border -->
-  <circle cx="20" cy="20" r="18.5" fill="url(#bgGrad)" stroke="#39C8AD" stroke-width="1.2" stroke-opacity="0.6" filter="url(#glow)" />
-  <!-- Botanical Leaf-Flame Glyph -->
-  <path d="M20 31.5C20 31.5 9 23 9 14.5C9 8.5 14 3.5 20 3.5C26 3.5 31 8.5 31 14.5C31 23 20 31.5 20 31.5Z" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  <!-- Central Vein -->
-  <path d="M20 3.5V31.5" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" />
-  <!-- Central Flame / Seed Node -->
-  <circle cx="20" cy="16" r="2.8" fill="#FFFFFF" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Dark background with rounded corners -->
+  <rect width="32" height="32" rx="6" fill="#0A0F0D"/>
+
+  <!-- Subtle centre glow -->
+  <radialGradient id="g" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#2FB39A" stop-opacity="0.22"/>
+    <stop offset="100%" stop-color="#0A0F0D" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="32" height="32" rx="6" fill="url(#g)"/>
+
+  <!-- ── OUTER GOLD RING ── -->
+  <circle cx="16" cy="16" r="12.5" stroke="#C8A45C" stroke-width="1.4"/>
+
+  <!-- 8 outer gold diamond petals (tip at ring, base at center) with teal tip dot -->
+  <g transform="rotate(0 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(45 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(90 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(135 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(180 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(225 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(270 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+  <g transform="rotate(315 16 16)">
+    <path d="M16 3.5 L17 8 L16 11 L15 8Z" fill="#101815" stroke="#C8A45C" stroke-width="0.7"/>
+    <circle cx="16" cy="3.8" r="1" fill="#2FB39A"/>
+  </g>
+
+  <!-- 8 inner teal petals, offset 22.5° -->
+  <g transform="rotate(22.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(67.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(112.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(157.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(202.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(247.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(292.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+  <g transform="rotate(337.5 16 16)">
+    <path d="M16 8.5 L16.7 11.5 L16 13 L15.3 11.5Z" fill="#1D2A24" stroke="#2FB39A" stroke-width="0.8"/>
+  </g>
+
+  <!-- Central anchor: gold ring + teal dot -->
+  <circle cx="16" cy="16" r="2.8" fill="#101815" stroke="#C8A45C" stroke-width="1"/>
+  <circle cx="16" cy="16" r="1.3" fill="#2FB39A"/>
 </svg>
