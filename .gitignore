@@ -12,3 +12,4 @@ data/raw/synthea_fhir_r4/
 *.tsbuildinfo
 *.zip
 pgsql/
+docs/AYUCTMS_EXPLAINED_FOR_BEGINNERS.md

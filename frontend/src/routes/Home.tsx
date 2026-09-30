@@ -39,6 +39,14 @@ import {
   KpiCard,
   STATE_TONE,
 } from "../components/widgets";
+import {
+  CHART_PALETTE,
+  ChartLegend,
+  ChartTooltip,
+  sharedCartesianGridProps,
+  sharedXAxisProps,
+  sharedYAxisProps,
+} from "../components/ChartTheme";
 
 const PIE_COLORS = [
   "#2FB39A",
@@ -73,7 +81,8 @@ function PortfolioKpis({ p }: { p: any }) {
       />
       <KpiCard
         label="Reporting Clocks"
-        value={`${p.clocks.overdue} overdue`}
+        value={p.clocks.overdue}
+        unit="OVERDUE"
         sub={`${p.clocks.running} running · ${p.clocks.completed ? Math.round((100 * p.clocks.on_time) / p.clocks.completed) : 100}% on time`}
         tone={p.clocks.overdue ? "danger" : "ok"}
       />
@@ -101,33 +110,47 @@ function EnrolmentVsTarget({ p }: { p: any }) {
   }));
 
   return (
-    <Card title="Enrolment Trajectory vs Target Sample">
-      <div className="h-64 w-full">
+    <Card
+      title="Enrolment Trajectory vs Target Sample"
+      actions={
+        <ChartLegend
+          items={[
+            { label: "Enrolled", color: CHART_PALETTE.enrolled },
+            { label: "Expected", color: CHART_PALETTE.expected },
+            { label: "Target", color: CHART_PALETTE.target },
+          ]}
+        />
+      }
+    >
+      <div className="h-[270px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ left: -15, right: 10, top: 10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-              stroke="var(--border)"
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-              stroke="var(--border)"
-            />
+          <BarChart data={data} barGap={4} margin={{ left: -15, right: 10, top: 12, bottom: 0 }}>
+            <CartesianGrid {...sharedCartesianGridProps} />
+            <XAxis dataKey="name" {...sharedXAxisProps} />
+            <YAxis {...sharedYAxisProps} />
             <Tooltip
-              contentStyle={{
-                backgroundColor: "var(--surface-1)",
-                borderColor: "var(--border)",
-                borderRadius: "8px",
-                color: "var(--text)",
-                fontSize: "12px",
-              }}
+              cursor={CHART_PALETTE.cursorBar}
+              content={<ChartTooltip />}
             />
-            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
-            <Bar dataKey="Enrolled" fill="var(--brand)" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="Expected" fill="var(--info)" radius={[3, 3, 0, 0]} opacity={0.6} />
-            <Bar dataKey="Target" fill="var(--border)" radius={[3, 3, 0, 0]} />
+            <Bar
+              dataKey="Enrolled"
+              fill={CHART_PALETTE.enrolled}
+              radius={[6, 6, 0, 0]}
+              maxBarSize={28}
+            />
+            <Bar
+              dataKey="Expected"
+              fill={CHART_PALETTE.expected}
+              radius={[6, 6, 0, 0]}
+              maxBarSize={28}
+              opacity={0.85}
+            />
+            <Bar
+              dataKey="Target"
+              fill={CHART_PALETTE.target}
+              radius={[6, 6, 0, 0]}
+              maxBarSize={28}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -157,13 +180,7 @@ function StudiesByState({ p }: { p: any }) {
             </Pie>
             <Tooltip
               formatter={(v: any, n: any) => [v, human(n)]}
-              contentStyle={{
-                backgroundColor: "var(--surface-1)",
-                borderColor: "var(--border)",
-                borderRadius: "8px",
-                color: "var(--text)",
-                fontSize: "12px",
-              }}
+              content={<ChartTooltip />}
             />
             <Legend
               formatter={(v: any) => human(v)}
@@ -282,7 +299,7 @@ function ActiveClocks() {
                 {a.clocks
                   .filter((c: any) => c.status !== "COMPLETED")
                   .map((c: any) => (
-                    <ClockRing key={c.id} clock={c} size={94} />
+                    <ClockRing key={c.id} clock={c} size={80} />
                   ))}
               </div>
             </div>

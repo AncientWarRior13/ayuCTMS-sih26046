@@ -60,23 +60,23 @@ export function Card({
   return (
     <section className={clsx("card overflow-hidden", className)}>
       {(title || actions || eyebrow) && (
-        <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-3.5 bg-[var(--surface-2)]/60">
+        <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 sm:px-5 py-3 bg-[var(--surface-2)]/60">
           <div>
             {eyebrow && (
-              <div className="font-mono text-[10px] uppercase font-bold tracking-wider text-[var(--accent-brass)] mb-0.5">
+              <div className="font-mono text-[0.6875rem] uppercase font-bold tracking-wider text-[var(--accent-brass)] mb-0.5">
                 {eyebrow}
               </div>
             )}
             {title && (
-              <h2 className="text-sm font-semibold tracking-wide text-[var(--text)] font-sans flex items-center gap-2">
+              <h2 className="text-section-title text-[var(--text)] font-sans flex items-center gap-2">
                 {title}
               </h2>
             )}
           </div>
-          <div className="flex items-center gap-2">{actions}</div>
+          <div className="flex items-center gap-2 shrink-0">{actions}</div>
         </header>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-4 sm:p-5">{children}</div>
     </section>
   );
 }
@@ -95,24 +95,24 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <div className={clsx("mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[#22302A]/80", className)}>
-      <div className="space-y-1.5">
+    <div className={clsx("mb-6 flex flex-col md:flex-row md:items-end justify-between gap-3 pb-3.5 border-b border-[#22302A]/80", className)}>
+      <div className="space-y-1">
         {eyebrow && (
-          <div className="font-mono text-xs uppercase tracking-widest text-[#C8A45C] flex items-center gap-2">
+          <div className="font-mono text-[0.6875rem] uppercase tracking-widest text-[#C8A45C] flex items-center gap-1.5 font-bold">
             <span className="h-1.5 w-1.5 rounded-full bg-[#2FB39A] shadow-[0_0_6px_#2FB39A]" />
             {eyebrow}
           </div>
         )}
-        <h1 className="font-display text-3xl sm:text-4xl font-medium tracking-tight text-[#E8EFE9]">
+        <h1 className="text-page-title text-[#E8EFE9]">
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-[#8FA398] leading-relaxed max-w-2xl font-sans">
+          <p className="text-[0.875rem] text-[#8FA398] leading-relaxed max-w-[65ch] font-sans">
             {description}
           </p>
         )}
       </div>
-      {actions && <div className="flex items-center gap-3 shrink-0">{actions}</div>}
+      {actions && <div className="flex items-center gap-2.5 shrink-0 mt-2 md:mt-0">{actions}</div>}
     </div>
   );
 }
@@ -138,7 +138,7 @@ export function Chip({
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider border",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[0.6875rem] font-semibold uppercase tracking-wider border",
         CHIP_TONES[tone],
         className,
       )}
@@ -219,7 +219,7 @@ export function Badge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-mono font-medium tracking-tight border",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-mono font-semibold uppercase tracking-wider border",
         TONES[tone],
         className,
       )}

@@ -146,7 +146,7 @@ function Heatmap() {
                 <span className="text-[10px] font-mono uppercase text-[var(--text-muted)]">
                   Composite Risk Score
                 </span>
-                <div className="font-display text-3xl font-bold text-[var(--text)]">
+                <div className="font-display text-kpi-numeral font-bold text-[var(--text)]">
                   {sel.score} <span className="text-xs font-mono font-normal text-[var(--text-muted)]">/ 100</span>
                 </div>
               </div>

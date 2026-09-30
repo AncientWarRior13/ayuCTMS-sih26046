@@ -61,6 +61,14 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
+
+  /* Fluid Typography Scale Tokens (Strict Hierarchy) */
+  --type-page-title: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --type-section-title: 1.0625rem;
+  --type-body: 0.875rem;
+  --type-secondary: 0.8125rem;
+  --type-mono-label: 0.6875rem;
+  --type-kpi-numeral: clamp(1.5rem, 1.2rem + 0.8vw, 2rem);
 }
 
 @theme {
@@ -206,22 +214,52 @@ body::before {
   box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
+/* Fluid Typography Scale Classes */
+.text-page-title {
+  font-family: var(--font-display);
+  font-size: var(--type-page-title);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+}
+
+.text-section-title {
+  font-size: var(--type-section-title);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.text-kpi-numeral {
+  font-family: var(--font-display);
+  font-size: var(--type-kpi-numeral);
+  line-height: 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+.text-mono-label {
+  font-family: var(--font-mono);
+  font-size: var(--type-mono-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
 .th {
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.75rem;
   text-align: left;
-  font-size: 0.75rem;
+  font-size: var(--type-mono-label);
   font-family: var(--font-mono);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .td {
-  padding: 0.75rem 1rem;
-  font-size: 0.8125rem;
+  padding: 0.625rem 0.75rem;
+  font-size: var(--type-secondary);
   color: var(--text);
   border-bottom: 1px solid var(--border-subtle);
 }

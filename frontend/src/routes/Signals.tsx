@@ -6,7 +6,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,6 +15,14 @@ import { get } from "../api/client";
 import { Badge, Card, Empty, Loading, PageHeader, Table } from "../components/ui";
 import { KpiCard } from "../components/widgets";
 import { Activity } from "lucide-react";
+import {
+  CHART_PALETTE,
+  ChartLegend,
+  ChartTooltip,
+  sharedCartesianGridProps,
+  sharedXAxisProps,
+  sharedYAxisProps,
+} from "../components/ChartTheme";
 
 /* ── Forest Plot Style Disproportionality Analysis ── */
 function SignalForestPlot({ rows }: { rows: any[] }) {
@@ -323,44 +330,46 @@ export default function SignalsPage() {
 
         {/* Charts Column */}
         <div className="space-y-6">
-          <Card title="Weekly Incident Trajectory">
+          <Card
+            title="Weekly Incident Trajectory"
+            actions={
+              <ChartLegend
+                items={[
+                  { label: "All AEs", color: CHART_PALETTE.enrolled },
+                  { label: "Serious (SAE)", color: CHART_PALETTE.escalated },
+                ]}
+              />
+            }
+          >
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={s.trend} margin={{ left: -20, right: 10, top: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <CartesianGrid {...sharedCartesianGridProps} />
                   <XAxis
                     dataKey="week"
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    {...sharedXAxisProps}
                     tickFormatter={(w: string) => w.slice(5)}
-                    stroke="var(--border)"
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    {...sharedYAxisProps}
                     allowDecimals={false}
-                    stroke="var(--border)"
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--surface-1)",
-                      borderColor: "var(--border)",
-                      borderRadius: "8px",
-                      color: "var(--text)",
-                      fontSize: "12px",
-                    }}
+                    cursor={CHART_PALETTE.cursorLine}
+                    content={<ChartTooltip />}
                   />
-                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
                   <Area
                     dataKey="n"
                     name="All Adverse Events"
-                    stroke="var(--brand)"
-                    fill="var(--brand)"
+                    stroke={CHART_PALETTE.enrolled}
+                    fill={CHART_PALETTE.enrolled}
                     fillOpacity={0.2}
                   />
                   <Area
                     dataKey="serious"
                     name="Serious (SAE)"
-                    stroke="var(--danger)"
-                    fill="var(--danger)"
+                    stroke={CHART_PALETTE.escalated}
+                    fill={CHART_PALETTE.escalated}
                     fillOpacity={0.3}
                   />
                 </AreaChart>
@@ -371,30 +380,30 @@ export default function SignalsPage() {
           <Card title="Distribution by System Organ Class (SOC)">
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={s.by_soc} layout="vertical" margin={{ left: 20, right: 20 }}>
+                <BarChart data={s.by_soc} layout="vertical" margin={{ left: 20, right: 20, top: 10, bottom: 0 }}>
+                  <CartesianGrid horizontal={false} stroke="rgba(47, 179, 154, 0.08)" strokeDasharray="3 3" />
                   <XAxis
                     type="number"
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    {...sharedXAxisProps}
                     allowDecimals={false}
-                    stroke="var(--border)"
                   />
                   <YAxis
                     type="category"
                     dataKey="soc"
-                    tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+                    {...sharedYAxisProps}
                     width={130}
-                    stroke="var(--border)"
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--surface-1)",
-                      borderColor: "var(--border)",
-                      borderRadius: "8px",
-                      color: "var(--text)",
-                      fontSize: "12px",
-                    }}
+                    cursor={CHART_PALETTE.cursorBar}
+                    content={<ChartTooltip />}
                   />
-                  <Bar dataKey="n" fill="var(--brand)" radius={[0, 4, 4, 0]} />
+                  <Bar
+                    dataKey="n"
+                    name="Adverse Events"
+                    fill={CHART_PALETTE.enrolled}
+                    radius={[0, 6, 6, 0]}
+                    maxBarSize={22}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>

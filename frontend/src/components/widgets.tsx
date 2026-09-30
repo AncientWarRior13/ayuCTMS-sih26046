@@ -13,61 +13,103 @@ import {
   YAxis,
 } from "recharts";
 import { Badge, human } from "./ui";
+import {
+  CHART_PALETTE,
+  ChartTooltip,
+  sharedCartesianGridProps,
+  sharedXAxisProps,
+  sharedYAxisProps,
+} from "./ChartTheme";
 
 /* ── 1. KPI Tile with High Authority Numerals & Accent Bar ── */
 export function KpiCard({
   label,
   value,
+  unit,
   sub,
   tone = "default",
   icon,
 }: {
   label: string;
   value: ReactNode;
+  unit?: string;
   sub?: ReactNode;
   tone?: "default" | "warn" | "danger" | "ok";
   icon?: ReactNode;
 }) {
+  let displayVal = value;
+  let displayUnit = unit;
+
+  if (typeof value === "string") {
+    const match = value.match(/^([\d\+\-\/\.\,\%]+(?:\s*\/\s*[\d\+\-\/\.\,]+)?)\s*([A-Za-z].*)$/);
+    if (match) {
+      displayVal = match[1].trim();
+      if (!displayUnit) {
+        displayUnit = match[2].trim().toUpperCase();
+      }
+    }
+  }
+
+  const unitColor =
+    tone === "danger"
+      ? "text-[#E5484D]"
+      : tone === "warn"
+        ? "text-[#D9A441]"
+        : tone === "ok"
+          ? "text-[#39C8AD]"
+          : "text-[#8FA398]";
+
   return (
     <div
       className={clsx(
-        "card p-5 transition-all duration-200 relative overflow-hidden group border rounded-2xl bg-[#101815]/90 backdrop-blur-md shadow-lg",
+        "card p-4 transition-all duration-200 relative overflow-hidden group border rounded-xl bg-[#101815]/90 backdrop-blur-md shadow-md min-h-[114px] flex flex-col justify-between",
         tone === "danger" && "border-[#E5484D]/40 bg-[#E5484D]/10 hover:border-[#E5484D]/60",
         tone === "warn" && "border-[#D9A441]/40 bg-[#D9A441]/10 hover:border-[#D9A441]/60",
         tone === "ok" && "border-[#2FB39A]/40 bg-[#2FB39A]/10 hover:border-[#2FB39A]/60",
-        tone === "default" && "border-[#22302A] hover:border-[#2FB39A]/40 hover:shadow-[0_0_20px_rgba(47,179,154,0.12)]",
+        tone === "default" && "border-[#22302A] hover:border-[#2FB39A]/40 hover:shadow-[0_0_16px_rgba(47,179,154,0.12)]",
       )}
     >
       <div
         className={clsx(
-          "absolute left-0 top-0 bottom-0 w-1",
+          "absolute left-0 top-0 bottom-0 w-[2.5px]",
           tone === "danger" && "bg-[#E5484D] shadow-[0_0_8px_#E5484D]",
           tone === "warn" && "bg-[#D9A441] shadow-[0_0_8px_#D9A441]",
           tone === "ok" && "bg-[#2FB39A] shadow-[0_0_8px_#2FB39A]",
           tone === "default" && "bg-[#22302A] group-hover:bg-[#2FB39A]",
         )}
       />
-      <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8FA398]">
-        <span>{label}</span>
-        <span className="text-[#56685F] group-hover:text-[#2FB39A] transition-colors">
+      <div className="flex items-center justify-between text-[0.6875rem] font-mono font-semibold uppercase tracking-wider text-[#8FA398]">
+        <span className="truncate pr-2">{label}</span>
+        <span className="text-[#56685F] group-hover:text-[#2FB39A] transition-colors shrink-0">
           {icon}
         </span>
       </div>
-      <div
-        className={clsx(
-          "mt-2 font-serif text-3xl sm:text-4xl font-medium tracking-tight tabular-nums",
-          tone === "danger"
-            ? "text-[#E5484D]"
-            : tone === "warn"
-              ? "text-[#D9A441]"
-              : tone === "ok"
-                ? "text-[#39C8AD]"
-                : "text-[#E8EFE9]",
+      <div className="mt-1.5 flex items-baseline whitespace-nowrap overflow-hidden">
+        <span
+          className={clsx(
+            "text-kpi-numeral font-medium tracking-tight tabular-nums truncate",
+            tone === "danger"
+              ? "text-[#E5484D]"
+              : tone === "warn"
+                ? "text-[#D9A441]"
+                : tone === "ok"
+                  ? "text-[#39C8AD]"
+                  : "text-[#E8EFE9]",
+          )}
+        >
+          {displayVal}
+        </span>
+        {displayUnit && (
+          <span className={clsx("font-mono text-[0.6875rem] font-bold uppercase tracking-wider ml-1.5 shrink-0", unitColor)}>
+            {displayUnit}
+          </span>
         )}
-      >
-        {value}
       </div>
-      {sub && <div className="mt-1.5 text-xs text-[#8FA398] font-sans leading-relaxed">{sub}</div>}
+      {sub && (
+        <div className="mt-1 text-[0.8125rem] text-[#8FA398] font-sans truncate" title={typeof sub === "string" ? sub : undefined}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
@@ -195,7 +237,7 @@ export interface Clock {
 /* ── 3. Radial ClockRing and Compact Chip ── */
 export function ClockRing({
   clock,
-  size = 110,
+  size = 80,
 }: {
   clock: Clock;
   size?: number;
@@ -204,21 +246,21 @@ export function ClockRing({
   const start = Date.parse(clock.started_at);
   const due = Date.parse(clock.due_at);
 
-  const radius = (size - 14) / 2;
+  const radius = (size - 12) / 2;
   const circumference = 2 * Math.PI * radius;
 
   if (clock.status === "COMPLETED") {
     const late = clock.completed_at && Date.parse(clock.completed_at) > due;
     return (
-      <div className="flex flex-col items-center justify-center p-3 text-center border border-[var(--border)] rounded-[var(--radius-md)] bg-[var(--surface-1)]">
+      <div className="flex flex-col items-center justify-center p-2.5 text-center border border-[var(--border)] rounded-xl bg-[var(--surface-1)]" style={{ width: size + 20 }}>
         <ShieldCheck
-          size={28}
+          size={24}
           className={late ? "text-[var(--warn)]" : "text-[var(--ok)]"}
         />
-        <span className="mt-1 text-xs font-mono font-medium">
-          {late ? "SUBMITTED LATE" : "SUBMITTED ON TIME"}
+        <span className="mt-1 text-[0.6875rem] font-mono font-semibold tracking-wider text-[var(--text)]">
+          {late ? "SUBMITTED LATE" : "ON TIME"}
         </span>
-        <span className="text-[10px] text-[var(--text-muted)] uppercase">
+        <span className="text-[0.625rem] text-[var(--text-muted)] font-mono uppercase truncate max-w-[80px]">
           {clock.rule_key.replace(/_/g, " ")}
         </span>
       </div>
@@ -243,13 +285,15 @@ export function ClockRing({
         ? "var(--warn)"
         : "var(--ok)";
 
-  const formattedTime =
+  const sign = isOverdue ? "-" : "";
+  const primaryTime =
     h >= 48
-      ? `${Math.floor(h / 24)}d ${h % 24}h`
-      : `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+      ? `${sign}${Math.floor(h / 24)}d ${h % 24}h`
+      : `${sign}${h}h ${String(m).padStart(2, "0")}m`;
+  const secondsText = `${String(s).padStart(2, "0")}s`;
 
   return (
-    <div className="flex flex-col items-center p-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-1)] shadow-sm">
+    <div className="flex flex-col items-center p-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] shadow-sm">
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
           <circle
@@ -257,7 +301,7 @@ export function ClockRing({
             cy={size / 2}
             r={radius}
             stroke="var(--border)"
-            strokeWidth="6"
+            strokeWidth="5"
             fill="transparent"
           />
           <circle
@@ -265,7 +309,7 @@ export function ClockRing({
             cy={size / 2}
             r={radius}
             stroke={color}
-            strokeWidth="6"
+            strokeWidth="5"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
@@ -273,21 +317,29 @@ export function ClockRing({
             className="transition-all duration-1000 ease-linear"
           />
         </svg>
-        <div className="absolute flex flex-col items-center justify-center text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-1 pointer-events-none">
           <span
             className={clsx(
-              "text-xs font-mono font-bold tabular-nums",
-              isOverdue ? "text-[var(--danger)] animate-pulse" : "text-[var(--text)]",
+              "font-mono text-[0.75rem] font-bold tabular-nums tracking-tight whitespace-nowrap leading-none",
+              isOverdue ? "text-[var(--danger)]" : "text-[var(--text)]",
             )}
           >
-            {isOverdue ? `-${formattedTime}` : formattedTime}
+            {primaryTime}
           </span>
-          <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">
-            {isOverdue ? "Overdue" : "Remaining"}
+          <span className="font-mono text-[0.625rem] text-[var(--text-muted)] tabular-nums mt-0.5 leading-none">
+            {secondsText}
+          </span>
+          <span
+            className={clsx(
+              "text-[0.5625rem] font-mono uppercase tracking-widest font-bold mt-1 leading-none",
+              isOverdue ? "text-[var(--danger)]" : "text-[var(--text-muted)]",
+            )}
+          >
+            {isOverdue ? "OVERDUE" : "REMAINING"}
           </span>
         </div>
       </div>
-      <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] max-w-[120px] truncate">
+      <div className="mt-1.5 text-center text-[0.625rem] font-mono font-semibold uppercase tracking-wider text-[var(--text-muted)] max-w-[100px] truncate" title={clock.rule_key.replace(/_/g, " ")}>
         {clock.rule_key.replace(/_/g, " ")}
       </div>
     </div>
@@ -386,69 +438,65 @@ export function EnrolmentChart({
   expected?: number | null;
 }) {
   return (
-    <div className="h-64 w-full">
+    <div className="h-[270px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={curve.map((c) => ({ ...c, target }))}
-          margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+          margin={{ top: 8, right: 12, left: -15, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+          <CartesianGrid {...sharedCartesianGridProps} />
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+            {...sharedXAxisProps}
             tickFormatter={(w: string) => w.slice(5)}
-            stroke="var(--border)"
           />
-          <YAxis
-            yAxisId="l"
-            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-            stroke="var(--border)"
-          />
-          <YAxis
-            yAxisId="r"
-            orientation="right"
-            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-            stroke="var(--border)"
-          />
+          <YAxis yAxisId="l" {...sharedYAxisProps} />
+          <YAxis yAxisId="r" orientation="right" {...sharedYAxisProps} />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--surface-1)",
-              borderColor: "var(--border)",
-              borderRadius: "8px",
-              color: "var(--text)",
-              fontSize: "12px",
+            content={<ChartTooltip />}
+            cursor={CHART_PALETTE.cursorBar}
+          />
+          <Legend
+            verticalAlign="top"
+            align="right"
+            wrapperStyle={{
+              fontSize: "0.6875rem",
+              fontFamily: "var(--font-mono)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              paddingBottom: 10,
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
           <Bar
             yAxisId="r"
             dataKey="n"
             name="Enrolled / week"
-            fill="var(--brand)"
-            opacity={0.7}
-            radius={[4, 4, 0, 0]}
+            fill={CHART_PALETTE.enrolled}
+            opacity={0.85}
+            radius={[6, 6, 0, 0]}
+            maxBarSize={28}
           />
           <Line
             yAxisId="l"
             dataKey="cumulative"
             name="Cumulative"
-            stroke="var(--brand-text)"
-            strokeWidth={2.5}
+            stroke={CHART_PALETTE.brandText}
+            strokeWidth={2}
             dot={false}
           />
           <Line
             yAxisId="l"
             dataKey="target"
             name="Target"
-            stroke="var(--accent-brass)"
+            stroke={CHART_PALETTE.target}
             strokeDasharray="4 4"
             dot={false}
           />
         </ComposedChart>
       </ResponsiveContainer>
       {expected != null && (
-        <p className="mt-2 text-xs text-[var(--text-muted)] font-mono">
-          Expected by today on linear timeline: <span className="text-[var(--text)] font-semibold">{expected}</span>
+        <p className="mt-1 text-[0.8125rem] text-[#8FA398] font-sans">
+          Expected by today on linear timeline: <span className="text-[#E8EFE9] font-mono font-semibold">{expected}</span>
         </p>
       )}
     </div>
