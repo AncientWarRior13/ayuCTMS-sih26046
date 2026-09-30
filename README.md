@@ -2,7 +2,7 @@
 
 > **Next-Generation Multi-Site Protocol Management, Cryptographic Audit Provenance, Real-Time Pharmacovigilance & Interoperable Clinical Data Platform for the Ministry of Ayush & All India Institute of Ayurveda (AIIA)**
 
-[Live Web Application](https://ayuctms.vercel.app/) • [API Documentation (Swagger)](https://ayuctms-backend.onrender.com/api/v1/docs) • [Architectural Specifications](https://github.com/AncientWarRior13/sih-46/blob/main/docs/02_ARCHITECTURE.md) • [Demonstration Video](https://github.com/AncientWarRior13/sih-46)
+[Live Web Application](https://ayuctms.vercel.app/) • [API Documentation (Swagger)](https://ayuctms-backend.onrender.com/api/v1/docs) • [Architectural Specifications](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/docs/02_ARCHITECTURE.md) • [Demonstration Video](https://github.com/AncientWarRior13/ayuCTMS-sih26046)
 
 ---
 
@@ -105,7 +105,7 @@ AyuCTMS captures multi-site clinical trials from prospective CTRI registry synch
 ## 📂 Repository Structure
 
 ```
-sih-46/
+ayuCTMS-sih26046/
 ├── backend/                        # High-Performance FastAPI Python Backend
 │   ├── app/
 │   │   ├── core/                   # App Configuration, JWT Auth, Database Engine
@@ -169,14 +169,14 @@ sih-46/
 ### 1. Prerequisites
 - **Python**: 3.11 or higher
 - **Node.js**: 20.x or higher
-- **PostgreSQL**: 15+ (with pgcrypto extension enabled)
+- **PostgreSQL**: 15+ (with `pgcrypto` extension enabled)
 - **Git**
 
 ### 2. Backend Setup
 ```bash
 # Clone the repository
-git clone https://github.com/AncientWarRior13/sih-46.git
-cd sih-46/backend
+git clone https://github.com/AncientWarRior13/ayuCTMS-sih26046.git
+cd ayuCTMS-sih26046/backend
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -191,7 +191,7 @@ pip install -r requirements.txt
 # Configure environment variables
 cp ../.env.example .env
 
-# Initialize database schema and synthetic dataset
+# Initialize database schema and complete synthetic trial dataset
 python scripts/seed.py --reset
 
 # Start the FastAPI backend server (Port 8000)
@@ -201,7 +201,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ### 3. Frontend Setup
 ```bash
 # Open a new terminal
-cd sih-46/frontend
+cd ayuCTMS-sih26046/frontend
 
 # Install dependencies
 npm install
@@ -210,6 +210,20 @@ npm install
 npm run dev
 ```
 Open **`http://localhost:5173`** in your browser.
+
+### 4. Demo Login Credentials
+
+The synthetic dataset includes pre-configured role-based test accounts with single-click login cards on the Access Gateway:
+
+| Role | Account Email | Password | Access Scope |
+| :--- | :--- | :--- | :--- |
+| **Principal Investigator (PI)** | `pi@demo.test` | `Demo@12345` | Protocol cohorts, patient randomization, e-CRF entry |
+| **Study Coordinator** | `coord@demo.test` | `Demo@12345` | Subject screening, visit scheduling, data queries |
+| **Clinical Monitor** | `monitor@demo.test` | `Demo@12345` | Source data verification (SDV), protocol deviations |
+| **Ethics Committee (IEC)** | `iec@demo.test` | `Demo@12345` | Ethical clearances, informed consent review |
+| **Pharmacovigilance (PV)** | `pv@demo.test` | `Demo@12345` | SAE reporting, herb-drug checker, regulatory clocks |
+| **Regulator (Sovereign)** | `regulator@demo.test` | `Demo@12345` | Read-only sovereign oversight & audit verification |
+| **Administrator** | `admin@demo.test` | `Demo@12345` | Multi-site isolation, system telemetry, user management |
 
 ---
 
@@ -226,13 +240,13 @@ Open **`http://localhost:5173`** in your browser.
 
 | SIH PS 26046 Benchmark | AyuCTMS Implementation & Compliance | Verified File Reference |
 | :--- | :--- | :--- |
-| **Ayurvedic Phenotyping CRF** | Full Prakriti, Vikriti, Agni, and Koshtha capture with longitudinal efficacy tracking. | [`backend/app/routers/participants.py`](https://github.com/AncientWarRior13/sih-46/blob/main/backend/app/routers/participants.py) |
-| **Herb-Drug Interaction Check** | Live Ayurvedic herb × allopathic drug matrix matching CYPs and P-gp mechanisms. | [`backend/app/routers/pv.py`](https://github.com/AncientWarRior13/sih-46/blob/main/backend/app/routers/pv.py) |
-| **Pharmacovigilance Clocks** | Real-time Schedule Y / ASU 24h, 7d, and 15d countdown escalation timers. | [`frontend/src/components/widgets.tsx`](https://github.com/AncientWarRior13/sih-46/blob/main/frontend/src/components/widgets.tsx) |
-| **Signal Detection (PRR / ROR)** | Disproportionality statistics (PRR, Yates-corrected χ², ROR 95% CI) mirror WHO-UMC. | [`backend/app/routers/pv.py`](https://github.com/AncientWarRior13/sih-46/blob/main/backend/app/routers/pv.py) |
-| **Cryptographic Audit Trail** | Immutable SHA-256 hash-chained transaction ledger with Merkle root anchoring. | [`backend/app/routers/audit_log.py`](https://github.com/AncientWarRior13/sih-46/blob/main/backend/app/routers/audit_log.py) |
-| **Global Interoperability** | 1-Click HL7 FHIR R4 Bundle exporter and CDISC SDTM (DM, AE, VS, QS) generation. | [`backend/app/routers/interop.py`](https://github.com/AncientWarRior13/sih-46/blob/main/backend/app/routers/interop.py) |
-| **Predictive Monitoring** | Leading-indicator risk score identifying visit slippage and query pileups. | [`backend/app/routers/quality.py`](https://github.com/AncientWarRior13/sih-46/blob/main/backend/app/routers/quality.py) |
+| **Ayurvedic Phenotyping CRF** | Full Prakriti, Vikriti, Agni, and Koshtha capture with longitudinal efficacy tracking. | [`backend/app/routers/participants.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/participants.py) |
+| **Herb-Drug Interaction Check** | Live Ayurvedic herb × allopathic drug matrix matching CYPs and P-gp mechanisms. | [`backend/app/routers/pv.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/pv.py) |
+| **Pharmacovigilance Clocks** | Real-time Schedule Y / ASU 24h, 7d, and 15d countdown escalation timers. | [`frontend/src/components/widgets.tsx`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/frontend/src/components/widgets.tsx) |
+| **Signal Detection (PRR / ROR)** | Disproportionality statistics (PRR, Yates-corrected χ², ROR 95% CI) mirror WHO-UMC. | [`backend/app/routers/pv.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/pv.py) |
+| **Cryptographic Audit Trail** | Immutable SHA-256 hash-chained transaction ledger with Merkle root anchoring. | [`backend/app/routers/audit_log.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/audit_log.py) |
+| **Global Interoperability** | 1-Click HL7 FHIR R4 Bundle exporter and CDISC SDTM (DM, AE, VS, QS) generation. | [`backend/app/routers/interop.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/interop.py) |
+| **Predictive Monitoring** | Leading-indicator risk score identifying visit slippage and query pileups. | [`backend/app/routers/quality.py`](https://github.com/AncientWarRior13/ayuCTMS-sih26046/blob/main/backend/app/routers/quality.py) |
 
 ---
 
