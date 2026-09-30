@@ -57,6 +57,21 @@ export function ChainScene() {
   const [enableEffects, setEnableEffects] = useState<boolean>(true);
   const [tabVisible, setTabVisible] = useState<boolean>(true);
 
+  const [webglSupported, setWebglSupported] = useState<boolean>(true);
+
+  // Probe WebGL capabilities on mount (handles outdated laptops / disabled hardware acceleration)
+  useEffect(() => {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl2") || canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) {
+        setWebglSupported(false);
+      }
+    } catch {
+      setWebglSupported(false);
+    }
+  }, []);
+
   // Pause rendering when tab is hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -71,10 +86,10 @@ export function ChainScene() {
     setEnableEffects(false);
   };
 
-  // If mobile (<768px) or prefers-reduced-motion, render static SVG poster
-  if (isMobileOrReduced) {
+  // If mobile (<768px), prefers-reduced-motion, or outdated laptop without WebGL, render static SVG poster
+  if (isMobileOrReduced || !webglSupported) {
     return (
-      <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-40">
+      <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-70">
         <ScenePoster className="w-full h-full" />
       </div>
     );

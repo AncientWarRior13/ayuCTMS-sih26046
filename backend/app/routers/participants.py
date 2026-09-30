@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
@@ -52,6 +52,31 @@ class CrfIn(BaseModel):
     template_id: int
     data: dict[str, Any]
     reason_for_change: str | None = None
+
+
+class PhenotypeIn(BaseModel):
+    visit_id: int | None = None
+    prakriti: str = Field(pattern="^(VATA|PITTA|KAPHA|VATA_PITTA|PITTA_KAPHA|VATA_KAPHA|SAMADOSHA)$")
+    prakriti_vata_pct: int = Field(ge=0, le=100)
+    prakriti_pitta_pct: int = Field(ge=0, le=100)
+    prakriti_kapha_pct: int = Field(ge=0, le=100)
+    vikriti_assessment: str | None = None
+    vikriti_vata_pct: int | None = Field(default=None, ge=0, le=100)
+    vikriti_pitta_pct: int | None = Field(default=None, ge=0, le=100)
+    vikriti_kapha_pct: int | None = Field(default=None, ge=0, le=100)
+    agni: str = Field(pattern="^(MANDA|TIKSHNA|VISHAMA|SAMA)$")
+    koshtha: str = Field(pattern="^(MRIDU|MADHYAMA|KRURA)$")
+    dhatu_sarata: dict[str, Any] | None = None
+    namaste_morbidity_code: str | None = None
+    icd11_tm2_code: str | None = None
+    reason_for_change: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_dosha_sum(self):
+        total = self.prakriti_vata_pct + self.prakriti_pitta_pct + self.prakriti_kapha_pct
+        if total != 100:
+            raise ValueError(f"Prakriti dosha percentages must sum exactly to 100% (currently {total}%)")
+        return self
 
 
 def block_arm(arms: list[str], study_id: int, n: int) -> str:
@@ -287,3 +312,77 @@ def submit_crf(vid: int, body: CrfIn, user: User = Depends(require("crf.write"))
     audit.write(conn, user, "UPDATE" if prev else "CREATE", "crf_entry", r["id"],
                 prev["data"] if prev else None, body.data, body.reason_for_change)
     return r
+
+
+@router.post("/participants/{pid}/phenotype", status_code=201)
+def submit_phenotype(pid: int, body: PhenotypeIn, user: User = Depends(require("phenotype.write")), conn=Depends(db)):
+    """Records or updates typed Ayurvedic phenotyping (Prakriti, Vikriti, Agni, Koshtha, Dhatu Sarata).
+    Maintains append-only version history aligned with Ayush Good Clinical Practice."""
+    p = participant_or_404(conn, pid)
+    if p["status"] == "WITHDRAWN":
+        raise HTTPException(409, "Participant has withdrawn consent; no new clinical assessments allowed")
+
+    if body.visit_id:
+        v = get_or_404(conn, "SELECT * FROM visits WHERE id = :v AND participant_id = :p",
+                       {"v": body.visit_id, "p": pid}, "Visit")
+
+    prev = one(conn, """
+        SELECT * FROM ayurvedic_phenotypes
+        WHERE participant_id = :p AND (visit_id = :v OR (:v IS NULL AND visit_id IS NULL))
+        ORDER BY version DESC LIMIT 1
+    """, {"p": pid, "v": body.visit_id})
+
+    if prev and not (body.reason_for_change and body.reason_for_change.strip()):
+        raise HTTPException(422, "reason_for_change is required when updating an existing Ayurvedic phenotype assessment")
+
+    new_version = (prev["version"] + 1) if prev else 1
+
+    r = one(conn, """
+        INSERT INTO ayurvedic_phenotypes (
+            participant_id, study_id, visit_id, prakriti, prakriti_vata_pct,
+            prakriti_pitta_pct, prakriti_kapha_pct, vikriti_assessment,
+            vikriti_vata_pct, vikriti_pitta_pct, vikriti_kapha_pct, agni,
+            koshtha, dhatu_sarata, namaste_morbidity_code, icd11_tm2_code,
+            assessed_by, version, supersedes_id, reason_for_change
+        ) VALUES (
+            :p, :s, :v, CAST(:prakriti AS prakriti_dominant), :v_pct, :p_pct, :k_pct,
+            :vikriti, :vv_pct, :vp_pct, :vk_pct, CAST(:agni AS agni_type),
+            CAST(:koshtha AS koshtha_type), CAST(:dhatu AS jsonb), :namaste, :icd,
+            :u, :ver, :sup, :reason
+        ) RETURNING *
+    """, {
+        "p": pid, "s": p["study_id"], "v": body.visit_id, "prakriti": body.prakriti,
+        "v_pct": body.prakriti_vata_pct, "p_pct": body.prakriti_pitta_pct, "k_pct": body.prakriti_kapha_pct,
+        "vikriti": body.vikriti_assessment, "vv_pct": body.vikriti_vata_pct, "vp_pct": body.vikriti_pitta_pct,
+        "vk_pct": body.vikriti_kapha_pct, "agni": body.agni, "koshtha": body.koshtha,
+        "dhatu": json.dumps(body.dhatu_sarata) if body.dhatu_sarata else None,
+        "namaste": body.namaste_morbidity_code, "icd": body.icd11_tm2_code, "u": user.id,
+        "ver": new_version, "sup": prev["id"] if prev else None, "reason": body.reason_for_change
+    })
+
+    audit.write(conn, user, "UPDATE" if prev else "CREATE", "ayurvedic_phenotype", r["id"],
+                before=prev, after=r, reason=body.reason_for_change)
+    return r
+
+
+@router.get("/participants/{pid}/phenotype")
+def get_phenotypes(pid: int, user: User = Depends(require("phenotype.read")), conn=Depends(db)):
+    """Returns the longitudinal Ayurvedic phenotype history for a participant."""
+    participant_or_404(conn, pid)
+    history = rows(conn, """
+        SELECT ap.*, u.full_name AS assessed_by_name, v.visit_name
+        FROM ayurvedic_phenotypes ap
+        LEFT JOIN users u ON u.id = ap.assessed_by
+        LEFT JOIN visits v ON v.id = ap.visit_id
+        WHERE ap.participant_id = :p
+        ORDER BY ap.assessed_at DESC, ap.version DESC
+    """, {"p": pid})
+
+    latest = history[0] if history else None
+    return {
+        "participant_id": pid,
+        "current_phenotype": latest,
+        "history": history,
+        "total_assessments": len(history)
+    }
+

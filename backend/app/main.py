@@ -12,7 +12,7 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from .core.config import get_settings
 from .core.db import engine
-from .routers import admin, audit_log, auth, dashboard, interop, participants, pv, quality, studies
+from .routers import admin, audit_log, auth, dashboard, interop, participants, pv, quality, signatures, studies
 from .services.alerts import hub
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -116,7 +116,7 @@ async def dberror(_: Request, exc: DBAPIError):
     return JSONResponse({"detail": "Database error"}, status_code=500)
 
 
-for r in (auth, studies, participants, quality, pv, dashboard, audit_log, interop, admin):
+for r in (auth, studies, participants, quality, pv, dashboard, audit_log, signatures, interop, admin):
     app.include_router(r.router, prefix=API)
 
 
