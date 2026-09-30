@@ -18,6 +18,26 @@ class Settings(BaseSettings):
     login_rate_per_min: int = 20
 
     @property
+    def clean_database_url(self) -> str:
+        url = self.database_url
+        if url.startswith("postgres://"):
+            return "postgresql+psycopg://" + url[len("postgres://"):]
+        if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+            return "postgresql+psycopg://" + url[len("postgresql://"):]
+        return url
+
+    @property
+    def clean_admin_database_url(self) -> str | None:
+        url = self.admin_database_url
+        if not url:
+            return None
+        if url.startswith("postgres://"):
+            return "postgresql+psycopg://" + url[len("postgres://"):]
+        if url.startswith("postgresql://") and not url.startswith("postgresql+"):
+            return "postgresql+psycopg://" + url[len("postgresql://"):]
+        return url
+
+    @property
     def cors_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
