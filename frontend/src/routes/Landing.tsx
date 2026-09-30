@@ -92,7 +92,7 @@ function getScrollSectionStyle(
     return {
       opacity: Math.max(0, Math.min(1, t)),
       transform: `translateY(${(1 - t) * 24}px)`,
-      pointerEvents: t > 0.6 ? "auto" : "none",
+      pointerEvents: "none",
       visibility: t > 0.01 ? "visible" : "hidden",
       transition: "opacity 80ms ease-out, transform 80ms ease-out",
     };
@@ -101,7 +101,7 @@ function getScrollSectionStyle(
     return {
       opacity: 1,
       transform: "translateY(0px)",
-      pointerEvents: "auto",
+      pointerEvents: "none",
       visibility: "visible",
       transition: "opacity 80ms ease-out, transform 80ms ease-out",
     };
@@ -113,7 +113,7 @@ function getScrollSectionStyle(
     return {
       opacity: Math.max(0, Math.min(1, 1 - t)),
       transform: `translateY(${-t * 24}px)`,
-      pointerEvents: t < 0.4 ? "auto" : "none",
+      pointerEvents: "none",
       visibility: (1 - t) > 0.01 ? "visible" : "hidden",
       transition: "opacity 80ms ease-out, transform 80ms ease-out",
     };
@@ -283,7 +283,7 @@ function LandingContent() {
           {/* ========================================================== */}
           <section
             style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.0, 0.0, 0.05, 0.11)}
-            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center"}
+            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center pointer-events-none"}
           >
             <div className="mx-auto w-full max-w-7xl px-6 pt-16">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -354,10 +354,10 @@ function LandingContent() {
           {/* ========================================================== */}
           <section
             style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.13, 0.19, 0.32, 0.38)}
-            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center"}
+            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center pointer-events-none"}
           >
             <div className="mx-auto w-full max-w-7xl px-6">
-              <div className="w-full lg:max-w-[45%] space-y-8">
+              <div className="w-full lg:max-w-[45%] space-y-8 pointer-events-auto">
                 <div>
                   <div className="font-data text-[13px] uppercase tracking-wider text-[#C8A45C] mb-3">
                     The shift
@@ -415,12 +415,12 @@ function LandingContent() {
           {/* ========================================================== */}
           <section
             style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.4, 0.45, 0.81, 0.86)}
-            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center"}
+            className={isMobileOrReduced ? "relative w-full" : "absolute inset-0 flex items-center pointer-events-none"}
           >
             <div className="mx-auto w-full max-w-7xl px-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 {/* Left Rail: 5 Stations with AA contrast for inactive rows */}
-                <div className="lg:col-span-5 space-y-3">
+                <div className="lg:col-span-5 space-y-3 pointer-events-auto">
                   <div className="text-[13px] font-mono text-[#C8A45C] uppercase tracking-wider mb-2">
                     Station {activeStationIndex + 1} of 5 · Clinical Data Pipeline
                   </div>
@@ -480,9 +480,9 @@ function LandingContent() {
           {/* ========================================================== */}
           <section
             style={isMobileOrReduced ? undefined : getScrollSectionStyle(progress, 0.87, 0.93, 1.0, 1.0)}
-            className={isMobileOrReduced ? "relative w-full text-center" : "absolute inset-0 flex items-center justify-center text-center"}
+            className={isMobileOrReduced ? "relative w-full text-center" : "absolute inset-0 flex items-center justify-center text-center pointer-events-none"}
           >
-            <div className="max-w-2xl px-6 space-y-6">
+            <div className="max-w-2xl px-6 space-y-6 pointer-events-auto">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#2FB39A]/50 bg-[#101815] px-4 py-1.5 text-[13px] text-[#39C8AD]">
                 <CheckCircle2 className="w-4 h-4 text-[#2FB39A]" />
                 All 60 Cryptographic Blocks Verified · Hash Chain Intact

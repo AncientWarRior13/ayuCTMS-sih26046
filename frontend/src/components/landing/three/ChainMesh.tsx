@@ -14,9 +14,9 @@ function createHexPrismGeometry() {
 
 const COLOR_INK = new THREE.Color("#1B3C30");
 const COLOR_TEAL = new THREE.Color("#2FB39A");
-const COLOR_DANGER = new THREE.Color("#FF2233");
+const COLOR_DANGER = new THREE.Color("#9B1B26");
 const COLOR_GOLD = new THREE.Color("#F3C968");
-const COLOR_DANGER_EDGE = new THREE.Color("#FF4455");
+const COLOR_DANGER_EDGE = new THREE.Color("#BF2633");
 
 export function ChainMesh() {
   const { progressDampedRef, tamperState, onTamper } = useSceneProgress();
@@ -230,7 +230,7 @@ export function ChainMesh() {
         <ShockwaveRing
           position={shockwavePos}
           triggerTime={tamperState.tamperTime}
-          color="#FF2233"
+          color="#9B1B26"
         />
       )}
     </group>
