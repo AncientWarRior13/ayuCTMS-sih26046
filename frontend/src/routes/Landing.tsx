@@ -146,6 +146,16 @@ function LandingContent() {
 
   return (
     <div className="landing-root relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
+      {/* Deep Sanctuary Atmospheric Radial Glows */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Central Vedic Emerald Lotus Bloom */}
+        <div className="absolute top-1/2 left-[62%] -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full bg-[radial-gradient(circle,rgba(47,179,154,0.11)_0%,rgba(200,164,92,0.05)_42%,transparent_72%)] blur-2xl" />
+        {/* Upper Right Warm Gold Haze */}
+        <div className="absolute -top-[10%] -right-[5%] w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(200,164,92,0.07)_0%,transparent_65%)] blur-3xl" />
+        {/* Bottom Left Deep Emerald Foundation */}
+        <div className="absolute -bottom-[15%] -left-[10%] w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle,rgba(30,68,57,0.14)_0%,transparent_60%)] blur-3xl" />
+      </div>
+
       {/* 3D WebGL Background Canvas with Poster Fallback */}
       <Suspense
         fallback={

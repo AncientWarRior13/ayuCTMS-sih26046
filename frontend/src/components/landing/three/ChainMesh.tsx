@@ -12,10 +12,10 @@ function createHexPrismGeometry() {
   return geo;
 }
 
-const COLOR_INK = new THREE.Color("#0C1612");
+const COLOR_INK = new THREE.Color("#1B3C30");
 const COLOR_TEAL = new THREE.Color("#2FB39A");
 const COLOR_DANGER = new THREE.Color("#FF2233");
-const COLOR_GOLD = new THREE.Color("#C8A45C");
+const COLOR_GOLD = new THREE.Color("#F3C968");
 const COLOR_DANGER_EDGE = new THREE.Color("#FF4455");
 
 export function ChainMesh() {
@@ -101,8 +101,19 @@ export function ChainMesh() {
         currentQuat.slerpQuaternions(layouts.corridorQuat[i], layouts.lotusQuat[i], t);
       }
 
-      // Scale all hex boxes to 1.25x uniformly across all phases
-      const nodeScale = 1.25;
+      // Node scale: 1.25x at start (hero lotus) and end (final lotus), expanding to 1.95x in the spiral
+      let nodeScale = 1.25;
+      if (p <= 0.28) {
+        nodeScale = 1.25;
+      } else if (p <= 0.40) {
+        const t = THREE.MathUtils.smoothstep((p - 0.28) / (0.40 - 0.28), 0, 1);
+        nodeScale = THREE.MathUtils.lerp(1.25, 1.95, t);
+      } else if (p <= 0.85) {
+        nodeScale = 1.95;
+      } else {
+        const t = THREE.MathUtils.smootherstep((p - 0.85) / 0.15, 0, 1);
+        nodeScale = THREE.MathUtils.lerp(1.95, 1.25, t);
+      }
 
       dummy.position.copy(currentPos);
       dummy.quaternion.copy(currentQuat);
@@ -187,16 +198,19 @@ export function ChainMesh() {
 
   return (
     <group>
-      {/* 60 Hexagonal Prism Blocks */}
+      {/* 60 Hexagonal Prism Blocks - Lustrous Obsidian/Jadeite Physical Material */}
       <instancedMesh
         ref={meshRef}
         args={[hexGeometry, undefined, BLOCK_COUNT]}
         onClick={handleClick}
         frustumCulled={false}
       >
-        <meshStandardMaterial
-          roughness={0.25}
-          metalness={0.3}
+        <meshPhysicalMaterial
+          roughness={0.18}
+          metalness={0.65}
+          clearcoat={0.65}
+          clearcoatRoughness={0.15}
+          reflectivity={0.6}
           color="#ffffff"
         />
       </instancedMesh>

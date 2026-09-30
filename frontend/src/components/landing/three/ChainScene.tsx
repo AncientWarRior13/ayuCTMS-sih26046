@@ -5,6 +5,7 @@ import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "
 import * as THREE from "three";
 import { CameraRig } from "./CameraRig";
 import { ChainMesh } from "./ChainMesh";
+import { ParticleDust } from "./ParticleDust";
 import { useSceneProgress } from "./SceneContext";
 import { ScenePoster } from "./ScenePoster";
 
@@ -113,10 +114,11 @@ export function ChainScene() {
           frameloop={tabVisible ? "always" : "never"}
           gl={{
             antialias: true,
+            alpha: true,
             powerPreference: "high-performance",
           }}
         >
-          <fogExp2 attach="fog" args={["#0A0F0D", 0.038]} />
+          <fogExp2 attach="fog" args={["#0A0F0D", 0.024]} />
 
           {/* Performance Monitor */}
           <PerformanceMonitor onDecline={handlePerformanceDrop} />
@@ -124,15 +126,20 @@ export function ChainScene() {
           {/* Central Progress Updater */}
           <ProgressUpdater />
 
-          {/* Lighting */}
-          <color attach="background" args={["#0A0F0D"]} />
-          <ambientLight intensity={0.4} color="#E8EFE9" />
-          <directionalLight position={[5, 8, 5]} intensity={1.5} color="#FFF5E0" />
-          <directionalLight position={[-5, -2, -3]} intensity={0.8} color="#2FB39A" />
-          <pointLight position={[0.75, 0.5, 0]} intensity={1.2} color="#C8A45C" distance={6} />
+          {/* Lighting & Specular Highlights */}
+          <ambientLight intensity={0.45} color="#E8EFE9" />
+          <directionalLight position={[5, 8, 5]} intensity={1.6} color="#FFF8E7" />
+          <directionalLight position={[-5, -2, -3]} intensity={0.9} color="#2FB39A" />
+          <directionalLight position={[0, 7, 7]} intensity={1.3} color="#FFFFFF" />
+          <pointLight position={[0.75, 1.2, 2.5]} intensity={1.6} color="#FFF2D6" distance={9} />
+          <pointLight position={[-2.5, 3.0, 2.0]} intensity={1.2} color="#6EEED4" distance={8} />
+          <pointLight position={[3.5, -1.5, 2.0]} intensity={0.8} color="#F3C968" distance={8} />
 
           {/* Camera Controller & Parallax */}
           <CameraRig />
+
+          {/* Floating Cryptographic Gold & Emerald Prana Particles */}
+          <ParticleDust />
 
           {/* 60 Hexagonal Prism Blocks */}
           <ChainMesh />
