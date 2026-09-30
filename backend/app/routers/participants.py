@@ -323,8 +323,8 @@ def submit_phenotype(pid: int, body: PhenotypeIn, user: User = Depends(require("
         raise HTTPException(409, "Participant has withdrawn consent; no new clinical assessments allowed")
 
     if body.visit_id:
-        v = get_or_404(conn, "SELECT * FROM visits WHERE id = :v AND participant_id = :p",
-                       {"v": body.visit_id, "p": pid}, "Visit")
+        get_or_404(conn, "SELECT * FROM visits WHERE id = :v AND participant_id = :p",
+                   {"v": body.visit_id, "p": pid}, "Visit")
 
     prev = one(conn, """
         SELECT * FROM ayurvedic_phenotypes

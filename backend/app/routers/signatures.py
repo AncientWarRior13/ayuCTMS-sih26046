@@ -10,7 +10,7 @@ from ..core.config import get_settings
 from ..core.deps import User, db, require
 from ..core.security import sha256_hex, verify_password
 from ..services import audit
-from ..services.common import get_or_404, one, rows, study_or_404
+from ..services.common import one, rows, study_or_404
 
 router = APIRouter(tags=["electronic signatures"])
 
