@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/newsreader/wght-italic.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource/geist-mono";
 @import "@fontsource/fraunces/400.css";
 @import "@fontsource/fraunces/600.css";
 @import "@fontsource/fraunces/700.css";
@@ -128,12 +132,36 @@ html.light {
 
 html, body, #root {
   min-height: 100%;
-  height: 100%;
+  height: auto;
   margin: 0;
   padding: 0;
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+}
+
+/* Lenis Smooth Scroll Configuration */
+html.lenis,
+html.lenis body,
+html.lenis #root {
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }
 
 /* Subtle botanical paper grain effect */
@@ -230,3 +258,49 @@ body::before {
 .animate-pulse-subtle {
   animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+/* ============================================================ */
+/* Landing Typography Scoped to .landing-root                   */
+/* ============================================================ */
+.landing-root {
+  --font-display: "Newsreader Variable", Georgia, serif;
+  --font-ui: "Geist Variable", system-ui, sans-serif;
+  --font-data: "Geist Mono", ui-monospace, monospace;
+  font-family: var(--font-ui);
+}
+
+.landing-root,
+.landing-root .font-ui,
+.landing-root .font-sans {
+  font-family: var(--font-ui);
+}
+
+.landing-root h1,
+.landing-root h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.landing-root .font-display,
+.landing-root .font-serif {
+  font-family: var(--font-display);
+}
+
+.landing-root .font-mono,
+.landing-root .font-data,
+.landing-root [data-mono] {
+  font-family: var(--font-data);
+}
+

@@ -2,50 +2,27 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Lenis from "lenis";
 import {
-  Activity,
   ArrowRight,
   CheckCircle2,
-  Clock,
   Database,
-  ExternalLink,
-  Eye,
-  FileCheck,
   Fingerprint,
-  Lock,
   RefreshCw,
-  Shield,
   ShieldAlert,
-  Sparkles,
 } from "lucide-react";
 import ChainScene from "../components/landing/three/ChainScene";
 import { SceneProvider, useSceneProgress } from "../components/landing/three/SceneContext";
 import { ScenePoster } from "../components/landing/three/ScenePoster";
 import { STATIONS } from "../components/landing/three/types";
-
-// Unfold 3 Problem -> Solution statements
-const UNFOLD_STATEMENTS = [
-  {
-    step: "01",
-    tag: "TAMPER-EVIDENT RECORDING",
-    problem: "Traditional trial spreadsheets allow retroactive edits and missing date stamps.",
-    solution:
-      "AyuCTMS calculates cryptographic SHA-256 block hashes on every CRF mutation. Any retroactive alteration breaks the forward chain immediately.",
-  },
-  {
-    step: "02",
-    tag: "STRICT AYUSH ONTOLOGIES",
-    problem: "Generic western EDC systems lack native Prakriti, Vikriti, Agni, and Ayush Morbidity vocabularies.",
-    solution:
-      "Built-in CDISC CT codelists + 30 Ayush morbidity terms mapped directly to CDISC SDTM and WHO-ART standards.",
-  },
-  {
-    step: "03",
-    tag: "REGULATORY SAE TIMERS",
-    problem: "Adverse events reported after the 24-hour statutory deadline risk clinical suspension.",
-    solution:
-      "Hardware-precise 1Hz PV countdown clocks notify CDSCO, Sponsor, and IEC with automated audit trail generation.",
-  },
-];
+import StandardsMarquee from "../components/landing/StandardsMarquee";
+import Bento from "../components/landing/Bento";
+import SignalSection from "../components/landing/SignalSection";
+import SecuritySection from "../components/landing/SecuritySection";
+import VerifyChain from "../components/landing/VerifyChain";
+import ComplianceTable from "../components/landing/ComplianceTable";
+import Roles from "../components/landing/Roles";
+import Faq from "../components/landing/Faq";
+import ClosingCta from "../components/landing/ClosingCta";
+import Footer from "../components/landing/Footer";
 
 // Live mini-readout component for How It Works
 function StationReadout({ station }: { station: (typeof STATIONS)[number] }) {
@@ -112,6 +89,7 @@ function LandingContent() {
     isMobileOrReduced,
   } = useSceneProgress();
 
+  const [progress, setProgress] = useState(0);
   const journeyRef = useRef<HTMLDivElement>(null);
 
   // Initialize Lenis smooth scroll and update target progress ref
@@ -132,6 +110,7 @@ function LandingContent() {
       const scrolled = -rect.top;
       const rawP = Math.max(0, Math.min(1, scrolled / journeyHeight));
       setScrollTarget(rawP);
+      setProgress(rawP);
     };
 
     lenis.on("scroll", handleLenisScroll);
@@ -142,14 +121,31 @@ function LandingContent() {
     }
     const rafId = requestAnimationFrame(raf);
 
+    // Observe document and spec sections so Lenis recalculates scroll height
+    const resizeObserver = new ResizeObserver(() => {
+      lenis.resize();
+    });
+    if (journeyRef.current) resizeObserver.observe(journeyRef.current);
+    const specEl = document.getElementById("spec");
+    if (specEl) resizeObserver.observe(specEl);
+    if (document.body) resizeObserver.observe(document.body);
+
+    const t1 = setTimeout(() => lenis.resize(), 100);
+    const t2 = setTimeout(() => lenis.resize(), 500);
+    const t3 = setTimeout(() => lenis.resize(), 1500);
+
     return () => {
+      resizeObserver.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       lenis.destroy();
       cancelAnimationFrame(rafId);
     };
   }, [setScrollTarget]);
 
   return (
-    <div className="relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
+    <div className="landing-root relative min-h-screen bg-[#0A0F0D] text-[#E8EFE9] selection:bg-[#2FB39A] selection:text-[#0A0F0D]">
       {/* 3D WebGL Background Canvas with Poster Fallback */}
       <Suspense
         fallback={
@@ -178,18 +174,26 @@ function LandingContent() {
             </div>
           </div>
 
+          {/* Centred Anchor Links (hidden below 900px) */}
+          <nav className="hidden min-[900px]:flex items-center gap-8 font-ui text-[14px] text-[#8FA398]">
+            <a href="#journey-top" className="hover:text-[#E8EFE9] transition-colors">
+              How it works
+            </a>
+            <a href="#platform" className="hover:text-[#E8EFE9] transition-colors">
+              Platform
+            </a>
+            <a href="#verify" className="hover:text-[#E8EFE9] transition-colors">
+              Verify
+            </a>
+            <a href="#roles" className="hover:text-[#E8EFE9] transition-colors">
+              Roles
+            </a>
+          </nav>
+
           <div className="flex items-center gap-4">
             <Link
-              to="/lab"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-mono text-[#C8A45C] bg-[#16201C] hover:bg-[#1D2A24] border border-[#C8A45C]/30 rounded-lg transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              3D Lab Rig
-            </Link>
-
-            <Link
               to="/login"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#2FB39A] px-4 py-2 text-[13px] font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#2FB39A] px-4 py-2 font-ui text-[14px] font-semibold text-[#0A0F0D] hover:bg-[#269984] transition-colors"
             >
               Sign In
               <ArrowRight className="h-3.5 w-3.5" />
@@ -203,8 +207,9 @@ function LandingContent() {
       {/* Drives progress 0.0 -> 1.0 with equal station distances       */}
       {/* ============================================================ */}
       <div
+        id="journey-top"
         ref={journeyRef}
-        className={isMobileOrReduced ? "relative z-10" : "relative z-10 h-[750vh]"}
+        className={isMobileOrReduced ? "relative z-10" : "relative z-10 h-[550vh] pointer-events-none"}
       >
         <div
           className={
@@ -217,19 +222,18 @@ function LandingContent() {
           {/* HERO SECTION (Progress 0.00 - 0.12)                         */}
           {/* ========================================================== */}
           <section
-            style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "hero")}
-            className="absolute inset-0 flex items-center"
+            className={`absolute inset-0 flex items-center pointer-events-none transition-opacity duration-500 ${isMobileOrReduced || progress <= 0.14 ? "opacity-100" : "opacity-0"}`}
           >
             <div className="mx-auto w-full max-w-7xl px-6 pt-16">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 {/* Left Column (Hero Content) */}
-                <div className="lg:col-span-6 space-y-6">
+                <div className="lg:col-span-6 space-y-6 pointer-events-auto">
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3.5 py-1 text-[13px] text-[#C8A45C]">
                     <span className="w-2 h-2 rounded-full bg-[#2FB39A]" />
                     Tamper-Evident Ayurveda Clinical Trials
                   </div>
 
-                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.1] tracking-tight text-[#E8EFE9]">
+                  <h1 className="font-serif text-4xl sm:text-5xl font-medium leading-[1.1] tracking-tight text-[#E8EFE9]">
                     Cryptographic integrity for traditional medicine research.
                   </h1>
 
@@ -285,40 +289,60 @@ function LandingContent() {
           </section>
 
           {/* ========================================================== */}
-          {/* UNFOLD SECTION (Progress 0.12 - 0.40)                       */}
+          {/* UNFOLD SECTION (Progress 0.14 - 0.38)                       */}
           {/* ========================================================== */}
           <section
             style={isMobileOrReduced ? undefined : getSectionStyle(activeSection === "unfold")}
             className="absolute inset-0 flex items-center"
           >
             <div className="mx-auto w-full max-w-7xl px-6">
-              <div className="w-full lg:w-[45%] space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#22302A] bg-[#101815] px-3.5 py-1 text-[13px] text-[#C8A45C]">
-                  <span>The Architectural Transformation</span>
+              <div className="w-full lg:max-w-[45%] space-y-8">
+                <div>
+                  <div className="font-data text-[13px] uppercase tracking-wider text-[#C8A45C] mb-3">
+                    The shift
+                  </div>
+
+                  <h2 className="font-display text-4xl sm:text-5xl leading-[1.05] text-[#E8EFE9]">
+                    From scattered spreadsheets to a <em className="italic text-[#C8A45C]">verifiable</em> audit chain.
+                  </h2>
                 </div>
 
-                <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9] leading-tight">
-                  From scattered clinical spreadsheets to a verified blockchain ledger.
-                </h2>
-
-                <div className="space-y-4 pt-2">
-                  {UNFOLD_STATEMENTS.map((item) => (
-                    <div
-                      key={item.step}
-                      className="p-4 rounded-xl bg-[#101815]/90 border border-[#22302A] backdrop-blur-md"
-                    >
-                      <div className="flex items-center justify-between text-[13px] font-mono text-[#C8A45C] mb-1">
-                        <span>{item.tag}</span>
-                        <span>{item.step}</span>
-                      </div>
-                      <div className="text-[13px] text-[#8FA398] line-through mb-1.5 opacity-80">
-                        {item.problem}
-                      </div>
-                      <div className="text-[14px] text-[#E8EFE9] leading-relaxed">
-                        {item.solution}
-                      </div>
+                <div className="divide-y divide-[#22302A]">
+                  <div className="py-5 first:pt-0 last:pb-0 space-y-1.5">
+                    <div className="font-data text-[13px] uppercase tracking-wider text-[#C8A45C]">
+                      INTEGRITY
                     </div>
-                  ))}
+                    <div className="text-[13px] text-[#8FA398]">
+                      Records get edited, and nobody can prove it.
+                    </div>
+                    <div className="text-[18px] text-[#E8EFE9] leading-snug">
+                      Every change becomes a new SHA-256 hash-chained block.
+                    </div>
+                  </div>
+
+                  <div className="py-5 first:pt-0 last:pb-0 space-y-1.5">
+                    <div className="font-data text-[13px] uppercase tracking-wider text-[#C8A45C]">
+                      SAFETY
+                    </div>
+                    <div className="text-[13px] text-[#8FA398]">
+                      Adverse events slip past their deadlines.
+                    </div>
+                    <div className="text-[18px] text-[#E8EFE9] leading-snug">
+                      Live regulatory clocks run on every serious adverse event.
+                    </div>
+                  </div>
+
+                  <div className="py-5 first:pt-0 last:pb-0 space-y-1.5">
+                    <div className="font-data text-[13px] uppercase tracking-wider text-[#C8A45C]">
+                      SIGNAL
+                    </div>
+                    <div className="text-[13px] text-[#8FA398]">
+                      Herb-drug interactions go unseen.
+                    </div>
+                    <div className="text-[18px] text-[#E8EFE9] leading-snug">
+                      PRR and ROR signals are flagged automatically.
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -354,7 +378,7 @@ function LandingContent() {
                         <div className="flex items-center justify-between">
                           <h3
                             className={`text-sm font-semibold ${
-                              isActive ? "text-[#FFFFFF]" : "text-[#CDE0D5]"
+                              isActive ? "text-[#FFFFFF]" : "text-[#8FA398]"
                             }`}
                           >
                             {station.title}
@@ -363,7 +387,7 @@ function LandingContent() {
                             className={`text-[13px] px-2.5 py-0.5 rounded font-mono ${
                               isActive
                                 ? "bg-[#2FB39A]/15 text-[#39C8AD] border border-[#2FB39A]/40"
-                                : "bg-[#1B2922] text-[#A8C0B2] border border-[#334D3F]"
+                                : "bg-[#1B2922] text-[#8FA398] border border-[#334D3F]"
                             }`}
                           >
                             {station.badge}
@@ -403,7 +427,7 @@ function LandingContent() {
                 All 60 Cryptographic Blocks Verified · Hash Chain Intact
               </div>
 
-              <h2 className="font-serif text-4xl sm:text-5xl font-normal text-[#E8EFE9] leading-tight">
+              <h2 className="font-serif text-4xl sm:text-5xl font-medium text-[#E8EFE9] leading-tight">
                 Ready to run compliance-grade Ayurvedic clinical trials?
               </h2>
 
@@ -427,152 +451,19 @@ function LandingContent() {
       </div>
 
       {/* ============================================================ */}
-      {/* SOLID SECTIONS: Bento, Roles, Regulatory, Footer             */}
+      {/* SOLID SECTIONS: Marquee, Bento, Signals, Security, etc.      */}
       {/* ============================================================ */}
       <div id="spec" className="relative z-10 bg-[#0A0F0D] border-t border-[#22302A]">
-        {/* Bento Grid */}
-        <section className="mx-auto max-w-7xl px-6 py-24">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9]">
-              Built for regulatory scrutiny from day zero
-            </h2>
-            <p className="text-[14px] text-[#8FA398]">
-              Compliant with the National Pharmacovigilance Programme for ASU Drugs and Schedule Y
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#2FB39A]">
-                <Clock className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-lg text-[#E8EFE9]">Schedule Y PV Clocks</h3>
-              <p className="text-[13px] text-[#8FA398] leading-relaxed">
-                Automated 24-hour statutory timers for serious adverse reactions (ADR/SAE).
-                Deterministic escalations notify the licensing authority and ethics committee.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#C8A45C]">
-                <FileCheck className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-lg text-[#E8EFE9]">CDISC SDTM & FHIR R4</h3>
-              <p className="text-[13px] text-[#8FA398] leading-relaxed">
-                Export submission-ready SDTM DM and AE domains alongside de-identified FHIR R4
-                ResearchStudy bundles for international peer review.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#4C8DFF]">
-                <Lock className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-lg text-[#E8EFE9]">Row-Level Security (RLS)</h3>
-              <p className="text-[13px] text-[#8FA398] leading-relaxed">
-                PostgreSQL multi-tenant database policies enforce strict site isolation.
-                Coordinators at Site 1 cannot view or modify participant data from Site 2.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#2FBF71]">
-                <Shield className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-lg text-[#E8EFE9]">DPDP Act 2023 Consent</h3>
-              <p className="text-[13px] text-[#8FA398] leading-relaxed">
-                Direct participant identifiers encrypted with Fernet AES-128. Consent withdrawal
-                immediately freezes future CRF data collection while retaining past audits.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#E0713A]">
-                <Activity className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-lg text-[#E8EFE9]">Classical Prakriti CRFs</h3>
-              <p className="text-[13px] text-[#8FA398] leading-relaxed">
-                Standardized forms capturing Vata, Pitta, Kapha, Agni, and Kostha phenotypes alongside
-                conventional biochemical and hematological laboratory panels.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#101815] border border-[#22302A] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#16201C] border border-[#22302A] flex items-center justify-center text-[#7A8FB8]">
-                <Eye className="w-5 h-5" />
-              </div>
-              <h3 className="font-serif text-lg text-[#E8EFE9]">Zero-Write Auditor Role</h3>
-              <p className="text-[13px] text-[#8FA398] leading-relaxed">
-                Specialized regulator persona with strict read-only access. Every inspection view is
-                itself immutably logged into the system audit trail.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Roles Section */}
-        <section className="mx-auto max-w-7xl px-6 py-20 border-t border-[#22302A]">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="font-serif text-3xl sm:text-4xl text-[#E8EFE9]">
-              Seven specialized stakeholder personas
-            </h2>
-            <p className="text-[14px] text-[#8FA398]">
-              Tailored dashboards designed specifically for each role's compliance duties
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            {[
-              { role: "PI", name: "Principal Investigator", desc: "Protocol & Approvals" },
-              { role: "COORD", name: "Study Coordinator", desc: "Patient Visits & CRF" },
-              { role: "MONITOR", name: "CRA Monitor", desc: "Source Data SDV" },
-              { role: "IEC", name: "Ethics Committee", desc: "Expiry & Safety Reviews" },
-              { role: "PV", name: "Safety Officer", desc: "24h SAE Timelines" },
-              { role: "ADMIN", name: "System Admin", desc: "Users & Rule Sets" },
-              { role: "REGULATOR", name: "CDSCO Auditor", desc: "Read-only Inspection" },
-            ].map((item) => (
-              <div
-                key={item.role}
-                className="p-3.5 rounded-xl bg-[#101815] border border-[#22302A] text-center space-y-1.5"
-              >
-                <div className="text-[13px] font-mono font-bold text-[#2FB39A]">{item.role}</div>
-                <div className="text-[13px] font-medium text-[#E8EFE9]">{item.name}</div>
-                <div className="text-[13px] text-[#8FA398]">{item.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="border-t border-[#22302A] py-12 px-6">
-          <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-[#2FB39A]" />
-              <span className="font-serif font-bold text-sm text-[#E8EFE9]">AyuCTMS</span>
-              <span className="text-[13px] text-[#8FA398]">
-                © 2026 Smart India Hackathon · Problem Statement 26046
-              </span>
-            </div>
-
-            <div className="flex items-center gap-6 text-[13px] text-[#8FA398]">
-              <Link to="/lab" className="hover:text-[#2FB39A] transition-colors">
-                3D Lab
-              </Link>
-              <Link to="/login" className="hover:text-[#2FB39A] transition-colors">
-                Sign In
-              </Link>
-              <a
-                href="https://ayush.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 hover:text-[#2FB39A] transition-colors"
-              >
-                Ministry of Ayush
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-        </footer>
+        <StandardsMarquee />
+        <Bento />
+        <SignalSection />
+        <SecuritySection />
+        <VerifyChain />
+        <ComplianceTable />
+        <Roles />
+        <Faq />
+        <ClosingCta />
+        <Footer />
       </div>
     </div>
   );
