@@ -18,7 +18,7 @@ SEED = 26046
 
 def owner_engine():
     s = get_settings()
-    url = s.admin_database_url or s.database_url
+    url = s.clean_admin_database_url or s.clean_database_url
     return create_engine(url, connect_args={"options": "-c timezone=GMT"})
 
 

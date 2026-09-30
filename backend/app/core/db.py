@@ -13,7 +13,7 @@ def engine() -> Engine:
     global _engine
     if _engine is None:
         _engine = create_engine(
-            get_settings().database_url,
+            get_settings().clean_database_url,
             pool_pre_ping=True,
             pool_size=10,
             connect_args={"options": "-c timezone=GMT"},
