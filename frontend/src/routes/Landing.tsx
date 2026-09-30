@@ -149,7 +149,7 @@ function LandingContent() {
       {/* 3D WebGL Background Canvas with Poster Fallback */}
       <Suspense
         fallback={
-          <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-40">
+          <div className="fixed inset-0 z-0 flex items-center justify-center opacity-80">
             <ScenePoster className="w-full h-full" />
           </div>
         }

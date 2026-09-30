@@ -25,7 +25,8 @@ export function CameraRig() {
   useFrame((_, delta) => {
     // Read the single shared damped progress from ref
     const p = progressDampedRef.current;
-    const lerpFactor = Math.min(1, delta * 6.0);
+    // Damping factor: gentle in hero for mouse parallax, responsive in corridor & final to prevent rubber-banding
+    const lerpFactor = p <= 0.28 ? Math.min(1, delta * 8.0) : Math.min(1, delta * 14.0);
 
     if (p <= 0.28) {
       // Hero Framing + Parallax
@@ -40,36 +41,38 @@ export function CameraRig() {
       const t = THREE.MathUtils.smoothstep((p - 0.28) / (0.4 - 0.28), 0, 1);
       targetCamPos.current.lerpVectors(
         new THREE.Vector3(0, 1.2, 5.5),
-        new THREE.Vector3(0, 0.4, 2.8),
+        new THREE.Vector3(0.35, 0.4, 2.8),
         t
       );
       targetLookAt.current.lerpVectors(
         new THREE.Vector3(0.6, 0, 0),
-        new THREE.Vector3(0, 0, -4.0),
+        new THREE.Vector3(0.35, 0, -4.0),
         t
       );
     } else if (p <= 0.85) {
-      // Flying down Corridor
+      // Flying down Corridor (Steps 1 to 5)
       const corridorT = (p - 0.4) / (0.85 - 0.4);
       const camZ = THREE.MathUtils.lerp(2.8, -44.0, corridorT);
-      const camX = Math.sin(corridorT * Math.PI * 4) * 0.25;
+      const camX = 0.35 + Math.sin(corridorT * Math.PI * 4) * 0.25;
       const camY = Math.cos(corridorT * Math.PI * 4) * 0.2;
 
       targetCamPos.current.set(camX, camY + 0.1, camZ);
-      targetLookAt.current.set(0, 0, camZ - 7.0);
+      targetLookAt.current.set(0.35, 0, camZ - 7.0);
     } else {
       // Returning to Hero Framing for Final Verified Lotus (0.85 - 1.00)
-      const t = THREE.MathUtils.smoothstep((p - 0.85) / 0.15, 0, 1);
+      const t = THREE.MathUtils.smootherstep((p - 0.85) / 0.15, 0, 1);
+
+      // Start position matches EXACT end of corridor at p=0.85
       targetCamPos.current.lerpVectors(
-        new THREE.Vector3(0, 0.1, -44.0),
+        new THREE.Vector3(0.35, 0.3, -44.0),
         new THREE.Vector3(0, 1.2, 5.5),
         t
       );
-      targetLookAt.current.lerpVectors(
-        new THREE.Vector3(0, 0, -51.0),
-        new THREE.Vector3(0, 0, 0),
-        t
-      );
+
+      // LookAt target: look smoothly ahead along -Z without any crossing or flip
+      const lookZ = THREE.MathUtils.lerp(targetCamPos.current.z - 7.0, 0, t);
+      const lookX = THREE.MathUtils.lerp(0.35, 0.6, t);
+      targetLookAt.current.set(lookX, 0, lookZ);
     }
 
     camera.position.lerp(targetCamPos.current, lerpFactor);

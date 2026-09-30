@@ -89,7 +89,7 @@ export function ChainScene() {
   // If mobile (<768px), prefers-reduced-motion, or outdated laptop without WebGL, render static SVG poster
   if (isMobileOrReduced || !webglSupported) {
     return (
-      <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center opacity-70">
+      <div className="fixed inset-0 z-0 flex items-center justify-center opacity-80">
         <ScenePoster className="w-full h-full" />
       </div>
     );
@@ -100,11 +100,15 @@ export function ChainScene() {
   return (
     <div
       className="fixed inset-0 z-0 overflow-hidden"
-      style={{
-        pointerEvents: isInteractive ? "auto" : "none",
-      }}
+      style={{ pointerEvents: "auto" }}
     >
-      <WebGLErrorBoundary fallback={<ScenePoster className="w-full h-full" />}>
+      <WebGLErrorBoundary
+        fallback={
+          <div className="w-full h-full" style={{ pointerEvents: "auto" }}>
+            <ScenePoster className="w-full h-full" />
+          </div>
+        }
+      >
         <Canvas
           dpr={dpr}
           camera={{ position: [0, 1.2, 5.5], fov: 45 }}

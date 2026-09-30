@@ -434,18 +434,21 @@ export function AyurvedicPhenotypeSection({
               </select>
             </Field>
 
-            <Field label="Visit Association (Optional)" hint="Link assessment to a protocol visit">
+            <Field label="Visit Association (Optional)" hint="Link to completed visit or record as baseline">
               <select
                 className="input"
                 value={visitId}
                 onChange={(e) => setVisitId(e.target.value === "" ? "" : Number(e.target.value))}
               >
-                <option value="">Baseline / Independent Assessment</option>
-                {visits.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.visit_name} ({fmtDate(v.planned_date)})
-                  </option>
-                ))}
+                <option value="">Baseline / Independent Evaluation (Today)</option>
+                {visits.map((v) => {
+                  const isMissed = v.status === "MISSED";
+                  return (
+                    <option key={v.id} value={v.id} disabled={isMissed}>
+                      {v.visit_name} ({fmtDate(v.actual_date || v.planned_date)}) {isMissed ? "— [MISSED]" : `— [${v.status}]`}
+                    </option>
+                  );
+                })}
               </select>
             </Field>
           </div>

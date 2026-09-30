@@ -12,9 +12,11 @@ function createHexPrismGeometry() {
   return geo;
 }
 
-const COLOR_INK = new THREE.Color("#101815");
+const COLOR_INK = new THREE.Color("#0C1612");
 const COLOR_TEAL = new THREE.Color("#2FB39A");
-const COLOR_DANGER = new THREE.Color("#E5484D");
+const COLOR_DANGER = new THREE.Color("#FF2233");
+const COLOR_GOLD = new THREE.Color("#C8A45C");
+const COLOR_DANGER_EDGE = new THREE.Color("#FF4455");
 
 export function ChainMesh() {
   const { progressDampedRef, tamperState, onTamper } = useSceneProgress();
@@ -32,15 +34,20 @@ export function ChainMesh() {
   const currentPos = useMemo(() => new THREE.Vector3(), []);
   const currentQuat = useMemo(() => new THREE.Quaternion(), []);
   const tempColor = useMemo(() => new THREE.Color(), []);
+  const tempEdgeColor = useMemo(() => new THREE.Color(), []);
 
   // Initialize instance colors once
   useEffect(() => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !edgesRef.current) return;
     for (let i = 0; i < BLOCK_COUNT; i++) {
       meshRef.current.setColorAt(i, COLOR_INK);
+      edgesRef.current.setColorAt(i, COLOR_GOLD);
     }
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
+    }
+    if (edgesRef.current.instanceColor) {
+      edgesRef.current.instanceColor.needsUpdate = true;
     }
   }, []);
 
@@ -84,16 +91,22 @@ export function ChainMesh() {
         currentQuat.copy(layouts.corridorQuat[i]);
       } else {
         // Phase 5: Corridor → Verified Lotus (0.85 - 1.00)
-        const phaseP = (p - 0.85) / (1.0 - 0.85);
-        const t = THREE.MathUtils.smoothstep(phaseP, 0, 1);
+        const phaseP = (p - 0.85) / 0.15;
+        // Graceful block stagger: blocks near the camera retreat first, creating a fluid wave
+        const staggerStart = ((BLOCK_COUNT - 1 - i) / BLOCK_COUNT) * 0.25;
+        const rawT = THREE.MathUtils.clamp((phaseP - staggerStart) / 0.75, 0, 1);
+        const t = THREE.MathUtils.smootherstep(rawT, 0, 1);
 
         currentPos.lerpVectors(layouts.corridorPos[i], layouts.lotusPos[i], t);
         currentQuat.slerpQuaternions(layouts.corridorQuat[i], layouts.lotusQuat[i], t);
       }
 
+      // Scale all hex boxes to 1.25x uniformly across all phases
+      const nodeScale = 1.25;
+
       dummy.position.copy(currentPos);
       dummy.quaternion.copy(currentQuat);
-      dummy.scale.set(1, 1, 1);
+      dummy.scale.set(nodeScale, nodeScale, nodeScale);
       dummy.updateMatrix();
 
       meshRef.current.setMatrixAt(i, dummy.matrix);
@@ -101,21 +114,26 @@ export function ChainMesh() {
 
       // 2. Color resolution
       let blockColor = COLOR_INK;
+      let edgeColor = COLOR_GOLD;
 
       if (p >= 0.85) {
-        // Final section: all blocks verified (teal)
-        const verifyFade = THREE.MathUtils.smoothstep((p - 0.85) / 0.15, 0, 1);
-        tempColor.lerpColors(COLOR_INK, COLOR_TEAL, verifyFade);
-        blockColor = tempColor;
+        // Final section: maintain golden tint and elegant ink aesthetic
+        blockColor = COLOR_INK;
+        edgeColor = COLOR_GOLD;
       } else if (tamperedIndex !== null && i >= tamperedIndex) {
-        // Tamper propagation: 30ms stagger per block index
-        const delayMs = (i - tamperedIndex) * 30;
+        // Tamper propagation: 25ms stagger per block index
+        const delayMs = (i - tamperedIndex) * 25;
         const elapsedSinceTamper = now - tamperTime;
 
         if (elapsedSinceTamper > delayMs) {
-          const redProgress = THREE.MathUtils.clamp((elapsedSinceTamper - delayMs) / 120, 0, 1);
+          const redProgress = THREE.MathUtils.clamp((elapsedSinceTamper - delayMs) / 100, 0, 1);
           tempColor.lerpColors(COLOR_INK, COLOR_DANGER, redProgress);
           blockColor = tempColor;
+          tempEdgeColor.lerpColors(COLOR_GOLD, COLOR_DANGER_EDGE, redProgress);
+          edgeColor = tempEdgeColor;
+        } else {
+          blockColor = COLOR_INK;
+          edgeColor = COLOR_GOLD;
         }
       } else if (restoreTime > 0) {
         // Green wave restore: 25ms stagger from 0 to 60
@@ -125,17 +143,22 @@ export function ChainMesh() {
           const restoreProgress = THREE.MathUtils.clamp((elapsedSinceRestore - delayMs) / 200, 0, 1);
           if (restoreProgress < 0.7) {
             blockColor = COLOR_TEAL;
+            edgeColor = COLOR_TEAL;
           } else {
             const settleProgress = (restoreProgress - 0.7) / 0.3;
             tempColor.lerpColors(COLOR_TEAL, COLOR_INK, settleProgress);
             blockColor = tempColor;
+            tempEdgeColor.lerpColors(COLOR_TEAL, COLOR_GOLD, settleProgress);
+            edgeColor = tempEdgeColor;
           }
         } else {
           blockColor = COLOR_DANGER;
+          edgeColor = COLOR_DANGER_EDGE;
         }
       }
 
       meshRef.current.setColorAt(i, blockColor);
+      edgesRef.current.setColorAt(i, edgeColor);
     }
 
     meshRef.current.instanceMatrix.needsUpdate = true;
@@ -143,11 +166,13 @@ export function ChainMesh() {
     if (meshRef.current.instanceColor) {
       meshRef.current.instanceColor.needsUpdate = true;
     }
+    if (edgesRef.current.instanceColor) {
+      edgesRef.current.instanceColor.needsUpdate = true;
+    }
   });
 
-  // Click handler (raycasting) enabled in hero phase
+  // Click handler: always enabled regardless of scroll progress
   const handleClick = (e: any) => {
-    if (progressDampedRef.current > 0.15) return;
     e.stopPropagation();
     const instanceId = e.instanceId;
     if (typeof instanceId === "number") {
@@ -162,7 +187,7 @@ export function ChainMesh() {
 
   return (
     <group>
-      {/* 60 Hexagonal Prism Blocks with frustumCulled={false} and enhanced corridor visibility */}
+      {/* 60 Hexagonal Prism Blocks */}
       <instancedMesh
         ref={meshRef}
         args={[hexGeometry, undefined, BLOCK_COUNT]}
@@ -170,22 +195,20 @@ export function ChainMesh() {
         frustumCulled={false}
       >
         <meshStandardMaterial
-          roughness={0.4}
+          roughness={0.25}
           metalness={0.3}
-          color="#101815"
-          emissive="#2FB39A"
-          emissiveIntensity={0.15}
+          color="#ffffff"
         />
       </instancedMesh>
 
-      {/* Brass Edge Highlights with frustumCulled={false} */}
+      {/* Edge Wireframe Highlights with dynamic instance color */}
       <instancedMesh
         ref={edgesRef}
         args={[hexGeometry, undefined, BLOCK_COUNT]}
         raycast={() => null}
         frustumCulled={false}
       >
-        <meshBasicMaterial color="#C8A45C" wireframe transparent opacity={0.75} />
+        <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.8} />
       </instancedMesh>
 
       {/* Tamper Shockwave Ring */}
@@ -193,7 +216,7 @@ export function ChainMesh() {
         <ShockwaveRing
           position={shockwavePos}
           triggerTime={tamperState.tamperTime}
-          color="#E5484D"
+          color="#FF2233"
         />
       )}
     </group>
