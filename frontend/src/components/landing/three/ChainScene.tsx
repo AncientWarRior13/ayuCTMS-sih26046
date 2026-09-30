@@ -51,7 +51,7 @@ function ProgressUpdater() {
 }
 
 export function ChainScene() {
-  const { progressDampedRef, isMobileOrReduced } = useSceneProgress();
+  const { isMobileOrReduced } = useSceneProgress();
 
   const [dpr, setDpr] = useState<number>(1.25);
   const [enableEffects, setEnableEffects] = useState<boolean>(true);
@@ -94,8 +94,6 @@ export function ChainScene() {
       </div>
     );
   }
-
-  const isInteractive = progressDampedRef.current < 0.15;
 
   return (
     <div
