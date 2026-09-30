@@ -1,12 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#2FB39A" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AyuCTMS - AIIA Clinical Trials Dashboard</title>
+    <title>AyuCTMS — Clinical Trial Management & Safety Command</title>
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem("ayuctms_theme");
+          if (theme === "light") {
+            document.documentElement.classList.add("light");
+            document.documentElement.classList.remove("dark");
+          } else {
+            document.documentElement.classList.add("dark");
+            document.documentElement.classList.remove("light");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body>
+  <body class="bg-background text-foreground antialiased selection:bg-brand/20 selection:text-brand-text">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

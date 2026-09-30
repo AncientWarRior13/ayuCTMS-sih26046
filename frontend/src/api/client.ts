@@ -1,4 +1,5 @@
-const BASE = "/api/v1";
+const API_HOST = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+const BASE = API_HOST ? `${API_HOST}/api/v1` : "/api/v1";
 const ACCESS = "ayuctms.access";
 const REFRESH = "ayuctms.refresh";
 
@@ -104,6 +105,11 @@ export async function login(email: string, password: string, totp?: string) {
 }
 
 export function wsUrl(): string {
-  const proto = location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${location.host}${BASE}/ws/alerts?token=${encodeURIComponent(tokens.access ?? "")}`;
+  if (API_HOST) {
+    const wsProto = API_HOST.startsWith("https:") ? "wss:" : "ws:";
+    const hostPart = API_HOST.replace(/^https?:\/\//, "");
+    return `${wsProto}//${hostPart}/api/v1/ws/alerts?token=${encodeURIComponent(tokens.access ?? "")}`;
+  }
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  return `${proto}//${location.host}${BASE}/ws/alerts?token=${encodeURIComponent(tokens.access ?? "")}`;
 }

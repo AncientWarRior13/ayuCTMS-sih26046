@@ -18,7 +18,7 @@ interface AuthState {
   me: Me | null;
   loading: boolean;
   can: (perm: string) => boolean;
-  login: (email: string, password: string, totp?: string) => Promise<void>;
+  login: (email: string, password: string, totp?: string) => Promise<Me>;
   logout: () => void;
 }
 
@@ -35,13 +35,13 @@ export const ROLE_LABEL: Record<Role, string> = {
 };
 
 export const ROLE_HOME: Record<Role, string> = {
-  PI: "/pi",
-  COORDINATOR: "/coordinator",
-  MONITOR: "/monitor",
-  IEC: "/iec",
-  PV: "/pv",
-  ADMIN: "/admin",
-  REGULATOR: "/regulator",
+  PI: "/app/pi",
+  COORDINATOR: "/app/coordinator",
+  MONITOR: "/app/monitor",
+  IEC: "/app/iec",
+  PV: "/app/pv",
+  ADMIN: "/app/admin",
+  REGULATOR: "/app/regulator",
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const fresh = await get<Me>("/auth/me");
         qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "me" });
         qc.setQueryData(["me"], fresh);
+        return fresh;
       },
       logout,
     }),

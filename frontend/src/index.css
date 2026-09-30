@@ -1,27 +1,321 @@
 @import "tailwindcss";
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/newsreader/wght-italic.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource/geist-mono";
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/600.css";
+@import "@fontsource/noto-sans-devanagari/400.css";
+@import "@fontsource/noto-sans-devanagari/600.css";
+
+:root {
+  /* Default: Ink Dark Mode (Dark Forest Green) */
+  --bg: #0A0F0D;
+  --surface-1: #101815;
+  --surface-2: #16201C;
+  --surface-3: #1D2A24;
+  --border: #22302A;
+  --border-subtle: #192520;
+  --border-highlight: rgba(47, 179, 154, 0.25);
+
+  --text: #E8EFE9;
+  --text-muted: #8FA398;
+  --text-faint: #56685F;
+
+  --brand: #2FB39A;
+  --brand-hover: #269984;
+  --brand-glow: rgba(47, 179, 154, 0.20);
+  --brand-text: #39C8AD;
+
+  --accent-brass: #C8A45C;
+  --accent-brass-subtle: rgba(200, 164, 92, 0.15);
+
+  /* Strict Semantics */
+  --ok: #2FB39A;
+  --ok-bg: rgba(47, 179, 154, 0.15);
+  --ok-border: rgba(47, 179, 154, 0.35);
+
+  --warn: #D9A441;
+  --warn-bg: rgba(217, 164, 65, 0.15);
+  --warn-border: rgba(217, 164, 65, 0.35);
+
+  --danger: #E5484D;
+  --danger-bg: rgba(229, 72, 77, 0.15);
+  --danger-border: rgba(229, 72, 77, 0.35);
+
+  --info: #4C8DFF;
+  --info-bg: rgba(76, 141, 255, 0.15);
+  --info-border: rgba(76, 141, 255, 0.35);
+
+  /* Prakriti Tri-tone */
+  --vata: #7A8FB8;
+  --pitta: #E0713A;
+  --kapha: #6FA36B;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  /* Fluid Typography Scale Tokens (Strict Hierarchy) */
+  --type-page-title: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --type-section-title: 1.0625rem;
+  --type-body: 0.875rem;
+  --type-secondary: 0.8125rem;
+  --type-mono-label: 0.6875rem;
+  --type-kpi-numeral: clamp(1.5rem, 1.2rem + 0.8vw, 2rem);
+}
 
 @theme {
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-200: #99f6e4;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-background: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-foreground: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-glow: var(--brand-glow);
+  --color-brand-text: var(--brand-text);
+
+  --color-brass: var(--accent-brass);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --font-display: "Newsreader Variable", Georgia, serif;
+  --font-sans: "Inter", "Geist Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-hindi: "Noto Sans Devanagari", sans-serif;
 }
 
-html, body, #root { height: 100%; }
-body { @apply bg-slate-50 text-slate-900 antialiased; }
+html, body, #root {
+  min-height: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
 
-:focus-visible { outline: 2px solid var(--color-brand-600); outline-offset: 2px; }
+/* Lenis Smooth Scroll Configuration */
+html.lenis,
+html.lenis body,
+html.lenis #root {
+  height: auto !important;
+  min-height: 100% !important;
+}
 
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Subtle botanical paper grain effect */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* High-precision tabular figures for numbers and code */
+.tabular-nums, .mono, [data-mono] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Inputs, Cards, and Utilities */
 .input {
-  @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400
-    focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20 disabled:bg-slate-100;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.label { @apply mb-1 block text-xs font-medium text-slate-600; }
-.th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500; }
-.td { @apply px-3 py-2 text-sm text-slate-700; }
-.mono { @apply font-mono text-xs; }
+.input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.card {
+  background-color: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  border-color: rgba(47, 179, 154, 0.35);
+}
+
+.glass-card {
+  background: rgba(16, 24, 21, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Fluid Typography Scale Classes */
+.text-page-title {
+  font-family: var(--font-display);
+  font-size: var(--type-page-title);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+}
+
+.text-section-title {
+  font-size: var(--type-section-title);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.text-kpi-numeral {
+  font-family: var(--font-display);
+  font-size: var(--type-kpi-numeral);
+  line-height: 1;
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+.text-mono-label {
+  font-family: var(--font-mono);
+  font-size: var(--type-mono-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.th {
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  font-size: var(--type-mono-label);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.td {
+  padding: 0.625rem 0.75rem;
+  font-size: var(--type-secondary);
+  color: var(--text);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Keyframes */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.98); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+/* ============================================================ */
+/* Landing Typography Scoped to .landing-root                   */
+/* ============================================================ */
+.landing-root {
+  --font-display: "Newsreader Variable", Georgia, serif;
+  --font-ui: "Geist Variable", system-ui, sans-serif;
+  --font-data: "Geist Mono", ui-monospace, monospace;
+  font-family: var(--font-ui);
+}
+
+.landing-root,
+.landing-root .font-ui,
+.landing-root .font-sans {
+  font-family: var(--font-ui);
+}
+
+.landing-root h1,
+.landing-root h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.landing-root .font-display,
+.landing-root .font-serif {
+  font-family: var(--font-display);
+}
+
+.landing-root .font-mono,
+.landing-root .font-data,
+.landing-root [data-mono] {
+  font-family: var(--font-data);
+}
+

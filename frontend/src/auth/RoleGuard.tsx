@@ -5,8 +5,21 @@ import { type Role, useAuth } from "./AuthContext";
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { me, loading } = useAuth();
   const loc = useLocation();
-  if (loading) return <div className="p-10 text-sm text-slate-500">Loading...</div>;
-  if (!me) return <Navigate to="/login" state={{ from: loc.pathname }} replace />;
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[var(--bg)]">
+        <div className="space-y-4 w-64 p-6">
+          <div className="h-4 w-3/4 rounded bg-[var(--surface-3)] animate-pulse" />
+          <div className="h-8 w-full rounded bg-[var(--surface-2)] animate-pulse" />
+          <div className="h-4 w-1/2 rounded bg-[var(--surface-3)] animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+  if (!me) {
+    const next = encodeURIComponent(loc.pathname + loc.search);
+    return <Navigate to={`/login?next=${next}`} replace />;
+  }
   return <>{children}</>;
 }
 
