@@ -93,7 +93,8 @@ async def guard(request: Request, call_next):
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    if not path.endswith("/docs"):
+    # Skip CSP on OPTIONS preflight — browsers discard preflight responses with restrictive CSP
+    if request.method != "OPTIONS" and not path.endswith("/docs"):
         resp.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
     resp.headers["Cache-Control"] = "no-store"
     return resp
