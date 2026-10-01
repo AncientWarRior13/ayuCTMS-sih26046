@@ -146,9 +146,10 @@ export function ChainMesh() {
           blockColor = COLOR_INK;
           edgeColor = COLOR_GOLD;
         }
-      } else if (restoreTime > 0) {
-        // Green wave restore: 25ms stagger from 0 to 60
-        const delayMs = i * 25;
+      } else if (restoreTime > 0 && tamperState.restoredFromIndex !== null && i >= tamperState.restoredFromIndex) {
+        // Green wave restore: only animate nodes that were actually tampered
+        const startIdx = tamperState.restoredFromIndex;
+        const delayMs = (i - startIdx) * 25;
         const elapsedSinceRestore = now - restoreTime;
         if (elapsedSinceRestore > delayMs) {
           const restoreProgress = THREE.MathUtils.clamp((elapsedSinceRestore - delayMs) / 200, 0, 1);
@@ -163,6 +164,7 @@ export function ChainMesh() {
             edgeColor = tempEdgeColor;
           }
         } else {
+          // Still in stagger delay — keep showing red until the wave reaches this node
           blockColor = COLOR_DANGER;
           edgeColor = COLOR_DANGER_EDGE;
         }

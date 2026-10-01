@@ -53,6 +53,7 @@ export function SceneProvider({
 
   const [tamperState, setTamperState] = useState<TamperState>({
     tamperedIndex: null,
+    restoredFromIndex: null,
     tamperTime: 0,
     restoreTime: 0,
   });
@@ -122,6 +123,7 @@ export function SceneProvider({
   const onTamper = useCallback((index: number) => {
     setTamperState({
       tamperedIndex: index,
+      restoredFromIndex: null,
       tamperTime: performance.now(),
       restoreTime: 0,
     });
@@ -130,6 +132,7 @@ export function SceneProvider({
   const onRestore = useCallback(() => {
     setTamperState((prev) => ({
       tamperedIndex: null,
+      restoredFromIndex: prev.tamperedIndex,
       tamperTime: prev.tamperTime,
       restoreTime: performance.now(),
     }));

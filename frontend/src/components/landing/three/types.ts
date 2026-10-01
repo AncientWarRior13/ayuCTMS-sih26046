@@ -96,6 +96,7 @@ export const STATIONS: readonly Station[] = [
 
 export interface TamperState {
   tamperedIndex: number | null;
+  restoredFromIndex: number | null;
   tamperTime: number;
   restoreTime: number;
 }
