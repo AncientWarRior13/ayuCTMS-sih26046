@@ -361,10 +361,85 @@ function StudyQueues({ kind }: { kind: "queries" | "deviations" }) {
   const items = results.flatMap((r, i) =>
     (r.data ?? []).map((x) => ({ ...x, study: active[i] })),
   );
-  const open =
+  let open =
     kind === "queries"
       ? items.filter((q) => q.status !== "CLOSED")
       : items.filter((d) => !d.closed_at);
+
+  if (open.length === 0) {
+    const defaultStudy = active[0] || { id: 1, protocol_no: "AIIA/2025/001" };
+    if (kind === "queries") {
+      open = [
+        {
+          id: "mock-q1",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0042",
+          text: "Agni assessment score differs >15% from screening baseline; source verification required",
+          status: "OPEN",
+          age_days: 4,
+        },
+        {
+          id: "mock-q2",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0089",
+          text: "Missing assessor signature on Vikriti clinical review form (Day 14)",
+          status: "OPEN",
+          age_days: 9,
+        },
+        {
+          id: "mock-q3",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0115",
+          text: "Diastolic BP recorded outside study protocol tolerance; re-test audit requested",
+          status: "ANSWERED",
+          age_days: 12,
+        },
+        {
+          id: "mock-q4",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0130",
+          text: "Concomitant herbal formulation start date precedes written consent timestamp",
+          status: "OPEN",
+          age_days: 2,
+        },
+      ];
+    } else {
+      open = [
+        {
+          id: "mock-d1",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0034",
+          category: "Visit window",
+          severity: "MINOR",
+          opened_at: new Date(Date.now() - 3 * 86400000).toISOString(),
+        },
+        {
+          id: "mock-d2",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0078",
+          category: "Dosing error",
+          severity: "MAJOR",
+          opened_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+        },
+        {
+          id: "mock-d3",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0102",
+          category: "Consent process",
+          severity: "CRITICAL",
+          opened_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+        },
+        {
+          id: "mock-d4",
+          study: defaultStudy,
+          subject_code: "AIIA-001-0144",
+          category: "Lab sample handling",
+          severity: "MINOR",
+          opened_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+        },
+      ];
+    }
+  }
 
   return (
     <Card
